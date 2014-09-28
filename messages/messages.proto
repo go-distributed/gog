@@ -1,0 +1,51 @@
+package protobuf;
+
+import "code.google.com/p/gogoprotobuf/gogoproto/gogo.proto";
+
+option (gogoproto.gostring_all) = true;
+option (gogoproto.equal_all) = true;
+option (gogoproto.verbose_equal_all) = true;
+option (gogoproto.goproto_stringer_all) = false;
+option (gogoproto.stringer_all) =  true;
+option (gogoproto.populate_all) = true;
+option (gogoproto.testgen_all) = true;
+option (gogoproto.benchgen_all) = true;
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+
+// User defined messages.
+message UserMessage {
+        required bytes uuid    = 1;
+        repeated bytes payload = 2;
+}
+
+// The Join request.
+message Join {
+        required bytes uuid = 1;
+}
+
+// The ForwardJoin request.
+message ForwardJoin {
+        required bytes uuid = 1;
+        required uint32 ttl = 2;
+        // Maybe add a nounce here to avoid
+        // fake reply.
+}
+
+// The Disconnect request.
+message Disconnect {
+        required bytes uuid = 1;
+}
+
+// The Shuffle request.
+message Shuffle {
+        required bytes uuid       = 1;
+        repeated bytes candidates = 2;
+}
+
+// The ShuffleReply.
+message ShuffleReply {
+        required bytes uuid       = 1;
+        repeated bytes candidates = 2;
+}
