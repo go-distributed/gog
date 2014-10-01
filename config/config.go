@@ -1,7 +1,18 @@
 package config
 
+import (
+	"net"
+)
+
 // Config describes the config of the system.
 type Config struct {
+	// Net should be tcp4 or tcp6.
+	Net string
+	// AddrStr is the local address string.
+	AddrStr string
+	// LocalTCPAddr is TCP address parsed from
+	// Net and AddrStr.
+	LocalTCPAddr *net.TCPAddr
 	// Fanin is the nodes we allow to have
 	// us in their active view.
 	Fanin int

@@ -4,15 +4,19 @@ import (
 	"fmt"
 	"net"
 
+	"code.google.com/p/go-uuid/uuid"
+	"code.google.com/p/gogoprotobuf/proto"
 	"github.com/go-distributed/gog/config"
+	"github.com/go-distributed/gog/event"
 	"github.com/go-distributed/gog/node"
+	log "github.com/golang/glog"
 )
 
 // AgentInterface describes the interface of an agent.
 type AgentInterface interface {
-	// Start starts a standalone agent, waiting for
+	// Serve starts a standalone agent, waiting for
 	// incoming connections.
-	Start() error
+	Serve() error
 	// Join joins the agent to the cluster.
 	Join(addr ...string) error
 	// Leave causes the agent to leave the cluster.
@@ -27,6 +31,8 @@ type AgentInterface interface {
 
 // Agent describes a gossip agent.
 type Agent struct {
+	// The uuid of the agent.
+	uuid uuid.UUID
 	// Configuration.
 	cfg *config.Config
 	// Active View.
@@ -35,6 +41,10 @@ type Agent struct {
 	pView []*node.Node
 	// TCP listener.
 	ln *net.TCPListener
+	// Event channel.
+	eventCh chan *event.Event
+	// Message channel.
+	messageCh chan proto.Message
 }
 
 // NewAgent creates a new agent.
@@ -46,10 +56,48 @@ func (ag *Agent) NewAgent(cfg *config.Config) *Agent {
 	}
 }
 
-// Start starts a standalone agent, waiting for
+// Serve starts a standalone agent, waiting for
 // incoming connections.
-func (ag *Agent) Start() error {
-	return fmt.Errorf("Fill me in")
+func (ag *Agent) Serve() error {
+	ln, err := net.ListenTCP(ag.cfg.Net, ag.cfg.LocalTCPAddr)
+	if err != nil {
+		return err
+	}
+	ag.ln = ln
+	ag.serve()
+	return nil
+}
+
+func (ag *Agent) serve() {
+	go ag.serveNewConn()
+	for {
+		select {
+		case evnt := <-ag.eventCh:
+			ag.dispatchEvents(evnt)
+		case msg := <-ag.messageCh:
+			ag.dispatchMessages(msg)
+		}
+	}
+}
+
+// serveNewConn listens on the TCP listener, waits for incoming connections.
+func (ag *Agent) serveNewConn() {
+	for {
+		conn, err := ag.ln.AcceptTCP()
+		if err != nil {
+			log.Errorf("Agent.serve(): Failed to accept")
+			continue
+		}
+		ag.eventCh <- event.NewConnectionEvent(ag.uuid, conn)
+	}
+}
+
+func (ag *Agent) dispatchEvents(evnt *event.Event) {
+
+}
+
+func (ag *Agent) dispatchMessages(msg proto.Message) {
+
 }
 
 // Leave causes the agent to leave the cluster.

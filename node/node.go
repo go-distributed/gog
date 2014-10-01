@@ -1,8 +1,9 @@
 package node
 
 import (
-	"code.google.com/p/go-uuid/uuid"
 	"net"
+
+	"code.google.com/p/go-uuid/uuid"
 )
 
 // Node decribes a node in the overlay.
