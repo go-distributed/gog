@@ -8,6 +8,10 @@ type Config struct {
 	// Fanout is the number of nodes in our
 	// active view.
 	Fanout int
+	// AViewSize is the size of the active view.
+	AViewSize int
+	// PViewSize is the size of the passive view.
+	PViewSize int
 	// Ka is the number of nodes in active view
 	// when shuffle views.
 	Ka int

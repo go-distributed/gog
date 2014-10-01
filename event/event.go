@@ -6,8 +6,8 @@ import (
 
 // Event describes a non-message event (e.g. Connection lost).
 type Event struct {
-	// Etype is the event type.
-	Etype int
+	// Type is the event type.
+	Type int
 	// Uuid indicates who triggers the event.
 	Uuid  uuid.UUID
 }
