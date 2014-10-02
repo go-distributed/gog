@@ -51,8 +51,8 @@ type Agent struct {
 func (ag *Agent) NewAgent(cfg *config.Config) *Agent {
 	return &Agent{
 		cfg:   cfg,
-		aView: make([]*node.Node, cfg.AViewSize),
-		pView: make([]*node.Node, cfg.PViewSize),
+		aView: make([]*node.Node, 0, cfg.AViewSize),
+		pView: make([]*node.Node, 0, cfg.PViewSize),
 	}
 }
 
@@ -88,16 +88,23 @@ func (ag *Agent) serveNewConn() {
 			log.Errorf("Agent.serve(): Failed to accept")
 			continue
 		}
-		ag.eventCh <- event.NewConnectionEvent(ag.uuid, conn)
+		go ag.handleNewConnection(conn)
 	}
 }
 
 func (ag *Agent) dispatchEvents(evnt *event.Event) {
-
+	switch evnt.Type {
+	case event.NewConnectionEventType:
+		ag.handleNewConnection(evnt.Content.(*net.TCPConn))
+	}
 }
 
 func (ag *Agent) dispatchMessages(msg proto.Message) {
 
+}
+
+func (ag *Agent) handleNewConnection(conn *net.TCPConn) {
+	
 }
 
 // Leave causes the agent to leave the cluster.
