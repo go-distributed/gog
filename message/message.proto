@@ -1,4 +1,4 @@
-package protobuf;
+package message;
 
 import "code.google.com/p/gogoprotobuf/gogoproto/gogo.proto";
 

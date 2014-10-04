@@ -3,7 +3,7 @@
 // DO NOT EDIT!
 
 /*
-	Package protobuf is a generated protocol buffer package.
+	Package message is a generated protocol buffer package.
 
 	It is generated from these files:
 		message.proto
@@ -16,7 +16,7 @@
 		Shuffle
 		ShuffleReply
 */
-package protobuf
+package message
 
 import proto "code.google.com/p/gogoprotobuf/proto"
 import json "encoding/json"
@@ -1230,42 +1230,42 @@ func (this *UserMessage) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings1.Join([]string{`&protobuf.UserMessage{` + `Uuid:` + valueToGoStringMessage(this.Uuid, "byte"), `Payload:` + fmt1.Sprintf("%#v", this.Payload), `XXX_unrecognized:` + fmt1.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings1.Join([]string{`&message.UserMessage{` + `Uuid:` + valueToGoStringMessage(this.Uuid, "byte"), `Payload:` + fmt1.Sprintf("%#v", this.Payload), `XXX_unrecognized:` + fmt1.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *Join) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings1.Join([]string{`&protobuf.Join{` + `Uuid:` + valueToGoStringMessage(this.Uuid, "byte"), `XXX_unrecognized:` + fmt1.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings1.Join([]string{`&message.Join{` + `Uuid:` + valueToGoStringMessage(this.Uuid, "byte"), `XXX_unrecognized:` + fmt1.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *ForwardJoin) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings1.Join([]string{`&protobuf.ForwardJoin{` + `Uuid:` + valueToGoStringMessage(this.Uuid, "byte"), `Ttl:` + valueToGoStringMessage(this.Ttl, "uint32"), `XXX_unrecognized:` + fmt1.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings1.Join([]string{`&message.ForwardJoin{` + `Uuid:` + valueToGoStringMessage(this.Uuid, "byte"), `Ttl:` + valueToGoStringMessage(this.Ttl, "uint32"), `XXX_unrecognized:` + fmt1.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *Disconnect) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings1.Join([]string{`&protobuf.Disconnect{` + `Uuid:` + valueToGoStringMessage(this.Uuid, "byte"), `XXX_unrecognized:` + fmt1.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings1.Join([]string{`&message.Disconnect{` + `Uuid:` + valueToGoStringMessage(this.Uuid, "byte"), `XXX_unrecognized:` + fmt1.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *Shuffle) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings1.Join([]string{`&protobuf.Shuffle{` + `Uuid:` + valueToGoStringMessage(this.Uuid, "byte"), `Candidates:` + fmt1.Sprintf("%#v", this.Candidates), `XXX_unrecognized:` + fmt1.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings1.Join([]string{`&message.Shuffle{` + `Uuid:` + valueToGoStringMessage(this.Uuid, "byte"), `Candidates:` + fmt1.Sprintf("%#v", this.Candidates), `XXX_unrecognized:` + fmt1.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *ShuffleReply) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings1.Join([]string{`&protobuf.ShuffleReply{` + `Uuid:` + valueToGoStringMessage(this.Uuid, "byte"), `Candidates:` + fmt1.Sprintf("%#v", this.Candidates), `XXX_unrecognized:` + fmt1.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings1.Join([]string{`&message.ShuffleReply{` + `Uuid:` + valueToGoStringMessage(this.Uuid, "byte"), `Candidates:` + fmt1.Sprintf("%#v", this.Candidates), `XXX_unrecognized:` + fmt1.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func valueToGoStringMessage(v interface{}, typ string) string {
