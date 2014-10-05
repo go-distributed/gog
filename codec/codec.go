@@ -1,7 +1,7 @@
 package codec
 
 import (
-	"bufio"
+	"bytes"
 	"encoding/binary"
 	"errors"
 	"io"
@@ -10,7 +10,10 @@ import (
 	"code.google.com/p/gogoprotobuf/proto"
 )
 
-const sizeOfUint8 = 1
+const (
+	sizeOfUint8 = 1
+	sizeOfInt32 = 4
+)
 
 var (
 	ErrMessageAlreadyRegistered = errors.New("Message already registered")
@@ -70,58 +73,50 @@ func (pc *ProtobufCodec) Encode(msg proto.Message, w io.Writer) error {
 	if !existed {
 		return ErrMessageNotRegistered
 	}
+	buf := new(bytes.Buffer)
+
 	b, err := proto.Marshal(msg)
 	if err != nil {
 		return err
 	}
-	bw := bufio.NewWriter(w)
-
-	// 1. Write the length.
-	if err := binary.Write(bw, binary.LittleEndian, int32(len(b))); err != nil {
+	// Write the length.
+	if err := binary.Write(buf, binary.LittleEndian, int32(len(b)+sizeOfUint8)); err != nil {
 		return err
 	}
-	// 2. Write the type.
-	if err := binary.Write(bw, binary.LittleEndian, index); err != nil {
+	// Write the type.
+	if err := binary.Write(buf, binary.LittleEndian, index); err != nil {
 		return err
 	}
-	// 3. Write the bytes.
-	n, err := bw.Write(b)
-	if err != nil {
+	// Write the bytes.
+	buf.Write(b)
+	if _, err = buf.WriteTo(w); err != nil {
 		return err
 	}
-	if n != len(b) {
-		return ErrCannotWriteMessage
-	}
-	return bw.Flush()
+	return nil
 }
 
 // Decode reads bytes from an io.Reader and decode it to a message.
 func (pc *ProtobufCodec) Decode(r io.Reader) (proto.Message, error) {
 	var length int32
-	var index uint8
 
-	// 1. Read the length.
+	// Read the length.
 	if err := binary.Read(r, binary.LittleEndian, &length); err != nil {
 		return nil, err
 	}
-	br := bufio.NewReaderSize(r, int(length)+sizeOfUint8)
-	// 1. Read the type.
-	if err := binary.Read(br, binary.LittleEndian, &index); err != nil {
-		return nil, err
-	}
-	// 3. Read the bytes.
 	b := make([]byte, length)
-	_, err := io.ReadFull(br, b)
-	if err != nil {
+	// Read the type and bytes.
+	if _, err := io.ReadFull(r, b); err != nil {
 		return nil, err
 	}
+	// Get the index.
+	index := uint8(b[0])
 	// Decode.
 	mtype, existed := pc.registeredMessages[index]
 	if !existed {
 		return nil, ErrMessageNotRegistered
 	}
 	msg := reflect.New(mtype.Elem()).Interface().(proto.Message)
-	if err := proto.Unmarshal(b, msg); err != nil {
+	if err := proto.Unmarshal(b[1:], msg); err != nil {
 		return nil, err
 	}
 	return msg, nil
