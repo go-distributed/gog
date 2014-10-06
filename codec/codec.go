@@ -28,7 +28,7 @@ type CodecInterface interface {
 	// Register registers a message so that the
 	// codec can identify the message when reading
 	// the TCP connection.
-	Register(msg proto.Message) error
+	Register(msg proto.Message)
 	// Encode encodes a message to bytes and
 	// writes it to the io.Writer
 	Encode(msg proto.Message, w io.Writer) error
@@ -56,15 +56,15 @@ func NewProtobufCodec() *ProtobufCodec {
 }
 
 // Register registers a message. Note this is not concurrent-safe.
-func (pc *ProtobufCodec) Register(msg proto.Message) error {
+func (pc *ProtobufCodec) Register(msg proto.Message) {
 	mtype := reflect.TypeOf(msg)
 	if _, existed := pc.messageIndices[mtype]; existed {
-		return ErrMessageAlreadyRegistered
+		panic("Message already registered")
 	}
 	index := uint8(len(pc.messageIndices))
 	pc.messageIndices[mtype] = index
 	pc.registeredMessages[index] = mtype
-	return nil
+	return
 }
 
 // Encode encodes a message to bytes and writes it to the io.Writer.
