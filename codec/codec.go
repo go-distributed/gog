@@ -29,12 +29,12 @@ type Codec interface {
 	// codec can identify the message when reading
 	// the TCP connection.
 	Register(msg proto.Message)
-	// Encode encodes a message to bytes and
+	// WriteMsg encodes a message to bytes and
 	// writes it to the io.Writer
-	Encode(msg proto.Message, w io.Writer) error
-	// Decode reads bytes from the io.Reader
+	WriteMsg(msg proto.Message, w io.Writer) error
+	// ReadMsg reads bytes from the io.Reader
 	// and decodes it to a message.
-	Decode(r io.Reader) (proto.Message, error)
+	ReadMsg(r io.Reader) (proto.Message, error)
 }
 
 // ProtobufCodec implements the codec interface.
@@ -67,14 +67,15 @@ func (pc *ProtobufCodec) Register(msg proto.Message) {
 	return
 }
 
-// Encode encodes a message to bytes and writes it to the io.Writer.
-func (pc *ProtobufCodec) Encode(msg proto.Message, w io.Writer) error {
+// WriteMsg encodes a message to bytes and writes it to the io.Writer.
+func (pc *ProtobufCodec) WriteMsg(msg proto.Message, w io.Writer) error {
 	index, existed := pc.messageIndices[reflect.TypeOf(msg)]
 	if !existed {
 		return ErrMessageNotRegistered
 	}
 	buf := new(bytes.Buffer)
 
+	// Encode.
 	b, err := proto.Marshal(msg)
 	if err != nil {
 		return err
@@ -95,8 +96,8 @@ func (pc *ProtobufCodec) Encode(msg proto.Message, w io.Writer) error {
 	return nil
 }
 
-// Decode reads bytes from an io.Reader and decode it to a message.
-func (pc *ProtobufCodec) Decode(r io.Reader) (proto.Message, error) {
+// ReadMsg reads bytes from an io.Reader and decode it to a message.
+func (pc *ProtobufCodec) ReadMsg(r io.Reader) (proto.Message, error) {
 	var length int32
 
 	// Read the length.

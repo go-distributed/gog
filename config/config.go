@@ -20,6 +20,7 @@ type Config struct {
 	// active view.
 	Fanout int
 	// AViewSize is the size of the active view.
+	// It is equal to Fanout.
 	AViewSize int
 	// PViewSize is the size of the passive view.
 	PViewSize int
@@ -29,4 +30,8 @@ type Config struct {
 	// Kp is the number of nodes in passive view
 	// when shuffle views.
 	Kp int
+	// Active Random Walk Length.
+	ARWL int
+	// Passive Random Walk Length.
+	PRWL int
 }

@@ -2,14 +2,12 @@ package node
 
 import (
 	"net"
-
-	"code.google.com/p/go-uuid/uuid"
 )
 
 // Node decribes a node in the overlay.
 type Node struct {
-	// Uuid is the node's identification.
-	Uuid uuid.UUID
+	// Id is the node's identification.
+	Id string
 	// Addr is the network address of the node,
 	// in the form of "host:port".
 	Addr string

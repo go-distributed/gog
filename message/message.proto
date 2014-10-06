@@ -16,42 +16,43 @@ option (gogoproto.unmarshaler_all) = true;
 
 // User defined messages.
 message UserMessage {
-        required bytes id      = 1;
+        required string id     = 1;
         repeated bytes payload = 2;
 }
 
 // The Join request.
 message Join {
-        required bytes id = 1;
+        required string id = 1;
 }
 
 // The Join request.
 message Neighbor {
-        required bytes id = 1;
+        required string id = 1;
 }
 
 // The ForwardJoin request.
 message ForwardJoin {
-        required bytes id        = 1;
-        required bytes origin_id = 2;
-        required uint32 ttl      = 3;
+        required string id         = 1;
+        required string sourceId   = 2;
+        required string sourceAddr = 3;
+        required uint32 ttl        = 4;
         // Maybe add a nounce here to avoid
         // fake reply.
 }
 
 // The Disconnect request.
 message Disconnect {
-        required bytes id = 1;
+        required string id = 1;
 }
 
 // The Shuffle request.
 message Shuffle {
-        required bytes id         = 1;
-        repeated bytes candidates = 2;
+        required string id         = 1;
+        repeated string candidates = 2;
 }
 
 // The ShuffleReply.
 message ShuffleReply {
-        required bytes id         = 1;
-        repeated bytes candidates = 2;
+        required string id         = 1;
+        repeated string candidates = 2;
 }
