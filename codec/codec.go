@@ -21,10 +21,10 @@ var (
 	ErrCannotWriteMessage       = errors.New("Cannot write message")
 )
 
-// CodecInterface describes the codec interface,
+// Codec describes the codec interface,
 // which encodes/decodes protobuf messages from/to
 // an io.Reader/Writer
-type CodecInterface interface {
+type Codec interface {
 	// Register registers a message so that the
 	// codec can identify the message when reading
 	// the TCP connection.
