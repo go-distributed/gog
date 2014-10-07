@@ -11,7 +11,6 @@ import (
 	"github.com/go-distributed/gog/message"
 	"github.com/go-distributed/gog/node"
 
-	"code.google.com/p/gogoprotobuf/proto"
 	log "github.com/golang/glog"
 )
 
@@ -90,14 +89,14 @@ func (ag *agent) serve() {
 			log.Errorf("Agent.serve(): Failed to accept\n")
 			continue
 		}
+		// TODO(Yifan): Set read time ount.
 		go ag.serveConn(conn)
 	}
 }
 
+// serveConn() serves a connection.
 func (ag *agent) serveConn(conn *net.TCPConn) {
 	defer conn.Close()
-	// TODO(Yifan): Set read time ount.
-
 	for {
 		msg, err := ag.codec.ReadMsg(conn)
 		if err != nil {
@@ -109,23 +108,17 @@ func (ag *agent) serveConn(conn *net.TCPConn) {
 		// Dispatch messages.
 		switch t := msg.(type) {
 		case *message.Join:
-			if !ag.handleJoin(conn, msg.(*message.Join)) {
-				return
-			}
+			go ag.handleJoin(conn, msg.(*message.Join))
 		case *message.Neighbor:
-			if !ag.handleNeighbor(conn, msg.(*message.Neighbor)) {
-				return
-			}
+			go ag.handleNeighbor(conn, msg.(*message.Neighbor))
 		case *message.ForwardJoin:
-			ag.handleForwardJoin(msg.(*message.ForwardJoin))
+			go ag.handleForwardJoin(msg.(*message.ForwardJoin))
 		case *message.Disconnect:
-			ag.handleDisconnect(msg.(*message.Disconnect))
+			go ag.handleDisconnect(msg.(*message.Disconnect))
 		case *message.Shuffle:
-			ag.handleShuffle(msg.(*message.Shuffle))
-		case *message.ShuffleReply:
-			ag.handleShuffleReply(msg.(*message.ShuffleReply))
+			go ag.handleShuffle(msg.(*message.Shuffle))
 		case *message.UserMessage:
-			ag.handleUserMessage(msg.(*message.UserMessage))
+			go ag.handleUserMessage(msg.(*message.UserMessage))
 		default:
 			log.Errorf("Agent.serveConn(): Unexpected message type: %T\n", t)
 			// TODO(yifan): Now what? Drop the conn?
@@ -135,11 +128,15 @@ func (ag *agent) serveConn(conn *net.TCPConn) {
 	}
 }
 
-// handleJoin() handles Join message, it returns true if it accepts and
-// adds the node in the active view. As specified by the protocol. It should
-// always accept Join requests, so it always returns true.
-func (ag *agent) handleJoin(conn *net.TCPConn, msg *message.Join) bool {
-	srcId, srcAddr := msg.GetId(), conn.RemoteAddr().String()
+// handleJoin() handles Join message. If it accepts the request, it will add
+// the node in the active view. As specified by the protocol, a node should
+// always accept Join requests.
+func (ag *agent) handleJoin(conn *net.TCPConn, msg *message.Join) {
+	newNode := &node.Node{
+		Id:   msg.GetId(),
+		Addr: conn.RemoteAddr().String(),
+		Conn: conn,
+	}
 
 	ag.mua.Lock()
 	defer ag.mua.Unlock()
@@ -149,62 +146,63 @@ func (ag *agent) handleJoin(conn *net.TCPConn, msg *message.Join) bool {
 		// Choose a victim, send Disconnect.
 		index = rand.Intn(ag.cfg.AViewSize)
 		ag.disconnect(ag.aView[index])
+		// TODO(yifan): Add the node to passive view.
 	}
 	// Add the node to our active view.
-	ag.aView[index] = &node.Node{
-		Id:   srcId,
-		Addr: srcAddr,
-		Conn: conn,
-	}
+	ag.aView[index] = newNode
 	// Send ForwardJoin message to all other the nodes in the active view.
 	for i, node := range ag.aView {
 		if i == index {
 			continue
 		}
-		if err := ag.forwardJoin(node, srcId, srcAddr); err != nil {
+		if err := ag.forwardJoin(node, newNode); err != nil {
 			// TODO(yifan): Check error and replace the node.
 		}
 	}
-	return true
 }
 
-// disconnect() sends a Disconnect message to the node, it does not
-// return an error because when we send Disconnet, we are going to
-// close the connection anyway.
-func (ag *agent) disconnect(node *node.Node) {
-	ag.codec.WriteMsg(
-		&message.Disconnect{
-			Id: proto.String(ag.id),
-		},
-		node.Conn)
-}
+// handleNeighbor() handles Neighbor message. If the request is high priority,
+// the receiver will always accept the request and add the node to its active view.
+// If the request is low priority, then the request will only be accepted when
+// there are empty slot in the active view.
+func (ag *agent) handleNeighbor(conn *net.TCPConn, msg *message.Neighbor) {
+	// TODO(yifan): Assert the node is not in active view already.
+	// TODO(yifan): Assert the node is not in passive view already.
+	newNode := &node.Node{
+		Id:   msg.GetId(),
+		Addr: conn.RemoteAddr().String(),
+		Conn: conn,
+	}
 
-// forwardJoin() sends a ForwardJoin message to the node. The message
-// will include the srcId and srcAddr provided, as the receiver might
-// use these information to establish a connection.
-func (ag *agent) forwardJoin(node *node.Node, srcId, srcAddr string) error {
-	return ag.codec.WriteMsg(
-		&message.ForwardJoin{
-			Id:         proto.String(ag.id),
-			SourceId:   proto.String(srcId),
-			SourceAddr: proto.String(srcAddr),
-			Ttl:        proto.Uint32(uint32(rand.Intn(ag.cfg.ARWL))),
-		},
-		node.Conn)
-}
+	ag.mua.Lock()
+	defer ag.mua.Unlock()
 
-// handleNeighbor() handles Neighbor message, it returns true if it accepts
-// the request and adds the node in the active view. It returns false if it
-// rejects the request.
-func (ag *agent) handleNeighbor(conn *net.TCPConn, msg *message.Neighbor) bool {
-	fmt.Println("Fill me in")
-	return true
+	index := len(ag.aView)
+	if index == ag.cfg.AViewSize {
+		if msg.GetPriority() == message.Neighbor_Low {
+			ag.rejectNeighbor(newNode)
+			// TODO(yifan): Add the node to passive view.
+			return
+		}
+		// Choose a victim, send Disconnect.
+		index = rand.Intn(ag.cfg.AViewSize)
+		ag.disconnect(ag.aView[index])
+		// TODO(yifan): Add the node to passive view.
+	}
+	// Add the node to our active view.
+	ag.aView[index] = newNode
+	ag.acceptNeighbor(newNode)
+	// TODO(yifan): Check error.
+	return
 }
 
 // handleForwardJoin() handles the ForwardJoin message, and decides whether
 // it will add the original sender to the active view or passive view.
 func (ag *agent) handleForwardJoin(msg *message.ForwardJoin) {
 	fmt.Println("Fill me in")
+	// if accept in active view. Send Neighbor and wait for reply.
+	// else, add to passive view.
+	// if ttl > 0, forward.
 	return
 }
 

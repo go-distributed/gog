@@ -12,6 +12,7 @@
 		UserMessage
 		Join
 		Neighbor
+		NeighborReply
 		ForwardJoin
 		Disconnect
 		Shuffle
@@ -46,6 +47,39 @@ import bytes "bytes"
 var _ = proto.Marshal
 var _ = &json.SyntaxError{}
 var _ = math.Inf
+
+type Neighbor_Priority int32
+
+const (
+	Neighbor_Low  Neighbor_Priority = 0
+	Neighbor_High Neighbor_Priority = 1
+)
+
+var Neighbor_Priority_name = map[int32]string{
+	0: "Low",
+	1: "High",
+}
+var Neighbor_Priority_value = map[string]int32{
+	"Low":  0,
+	"High": 1,
+}
+
+func (x Neighbor_Priority) Enum() *Neighbor_Priority {
+	p := new(Neighbor_Priority)
+	*p = x
+	return p
+}
+func (x Neighbor_Priority) String() string {
+	return proto.EnumName(Neighbor_Priority_name, int32(x))
+}
+func (x *Neighbor_Priority) UnmarshalJSON(data []byte) error {
+	value, err := proto.UnmarshalJSONEnum(Neighbor_Priority_value, data, "Neighbor_Priority")
+	if err != nil {
+		return err
+	}
+	*x = Neighbor_Priority(value)
+	return nil
+}
 
 // User defined messages.
 type UserMessage struct {
@@ -87,10 +121,11 @@ func (m *Join) GetId() string {
 	return ""
 }
 
-// The Join request.
+// The Neighbor request.
 type Neighbor struct {
-	Id               *string `protobuf:"bytes,1,req,name=id" json:"id,omitempty"`
-	XXX_unrecognized []byte  `json:"-"`
+	Id               *string            `protobuf:"bytes,1,req,name=id" json:"id,omitempty"`
+	Priority         *Neighbor_Priority `protobuf:"varint,2,req,name=priority,enum=message.Neighbor_Priority" json:"priority,omitempty"`
+	XXX_unrecognized []byte             `json:"-"`
 }
 
 func (m *Neighbor) Reset()      { *m = Neighbor{} }
@@ -101,6 +136,37 @@ func (m *Neighbor) GetId() string {
 		return *m.Id
 	}
 	return ""
+}
+
+func (m *Neighbor) GetPriority() Neighbor_Priority {
+	if m != nil && m.Priority != nil {
+		return *m.Priority
+	}
+	return Neighbor_Low
+}
+
+// The reply to Neighbor request.
+type NeighborReply struct {
+	Id               *string `protobuf:"bytes,1,req,name=id" json:"id,omitempty"`
+	Accept           *bool   `protobuf:"varint,2,req,name=accept" json:"accept,omitempty"`
+	XXX_unrecognized []byte  `json:"-"`
+}
+
+func (m *NeighborReply) Reset()      { *m = NeighborReply{} }
+func (*NeighborReply) ProtoMessage() {}
+
+func (m *NeighborReply) GetId() string {
+	if m != nil && m.Id != nil {
+		return *m.Id
+	}
+	return ""
+}
+
+func (m *NeighborReply) GetAccept() bool {
+	if m != nil && m.Accept != nil {
+		return *m.Accept
+	}
+	return false
 }
 
 // The ForwardJoin request.
@@ -208,6 +274,7 @@ func (m *ShuffleReply) GetCandidates() []string {
 }
 
 func init() {
+	proto.RegisterEnum("message.Neighbor_Priority", Neighbor_Priority_name, Neighbor_Priority_value)
 }
 func (m *UserMessage) Unmarshal(data []byte) error {
 	l := len(data)
@@ -404,6 +471,106 @@ func (m *Neighbor) Unmarshal(data []byte) error {
 			s := string(data[index:postIndex])
 			m.Id = &s
 			index = postIndex
+		case 2:
+			if wireType != 0 {
+				return code_google_com_p_gogoprotobuf_proto.ErrWrongType
+			}
+			var v Neighbor_Priority
+			for shift := uint(0); ; shift += 7 {
+				if index >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[index]
+				index++
+				v |= (Neighbor_Priority(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.Priority = &v
+		default:
+			var sizeOfWire int
+			for {
+				sizeOfWire++
+				wire >>= 7
+				if wire == 0 {
+					break
+				}
+			}
+			index -= sizeOfWire
+			skippy, err := code_google_com_p_gogoprotobuf_proto.Skip(data[index:])
+			if err != nil {
+				return err
+			}
+			if (index + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, data[index:index+skippy]...)
+			index += skippy
+		}
+	}
+	return nil
+}
+func (m *NeighborReply) Unmarshal(data []byte) error {
+	l := len(data)
+	index := 0
+	for index < l {
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if index >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := data[index]
+			index++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return code_google_com_p_gogoprotobuf_proto.ErrWrongType
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if index >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[index]
+				index++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			postIndex := index + int(stringLen)
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			s := string(data[index:postIndex])
+			m.Id = &s
+			index = postIndex
+		case 2:
+			if wireType != 0 {
+				return code_google_com_p_gogoprotobuf_proto.ErrWrongType
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if index >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[index]
+				index++
+				v |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			b := bool(v != 0)
+			m.Accept = &b
 		default:
 			var sizeOfWire int
 			for {
@@ -823,6 +990,19 @@ func (this *Neighbor) String() string {
 	}
 	s := strings.Join([]string{`&Neighbor{`,
 		`Id:` + valueToStringMessage(this.Id) + `,`,
+		`Priority:` + valueToStringMessage(this.Priority) + `,`,
+		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *NeighborReply) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&NeighborReply{`,
+		`Id:` + valueToStringMessage(this.Id) + `,`,
+		`Accept:` + valueToStringMessage(this.Accept) + `,`,
 		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
@@ -921,6 +1101,24 @@ func (m *Neighbor) Size() (n int) {
 	if m.Id != nil {
 		l = len(*m.Id)
 		n += 1 + l + sovMessage(uint64(l))
+	}
+	if m.Priority != nil {
+		n += 1 + sovMessage(uint64(*m.Priority))
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+func (m *NeighborReply) Size() (n int) {
+	var l int
+	_ = l
+	if m.Id != nil {
+		l = len(*m.Id)
+		n += 1 + l + sovMessage(uint64(l))
+	}
+	if m.Accept != nil {
+		n += 2
 	}
 	if m.XXX_unrecognized != nil {
 		n += len(m.XXX_unrecognized)
@@ -1047,22 +1245,36 @@ func NewPopulatedNeighbor(r randyMessage, easy bool) *Neighbor {
 	this := &Neighbor{}
 	v5 := randStringMessage(r)
 	this.Id = &v5
+	v6 := Neighbor_Priority([]int32{0, 1}[r.Intn(2)])
+	this.Priority = &v6
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMessage(r, 2)
+		this.XXX_unrecognized = randUnrecognizedMessage(r, 3)
+	}
+	return this
+}
+
+func NewPopulatedNeighborReply(r randyMessage, easy bool) *NeighborReply {
+	this := &NeighborReply{}
+	v7 := randStringMessage(r)
+	this.Id = &v7
+	v8 := bool(r.Intn(2) == 0)
+	this.Accept = &v8
+	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedMessage(r, 3)
 	}
 	return this
 }
 
 func NewPopulatedForwardJoin(r randyMessage, easy bool) *ForwardJoin {
 	this := &ForwardJoin{}
-	v6 := randStringMessage(r)
-	this.Id = &v6
-	v7 := randStringMessage(r)
-	this.SourceId = &v7
-	v8 := randStringMessage(r)
-	this.SourceAddr = &v8
-	v9 := r.Uint32()
-	this.Ttl = &v9
+	v9 := randStringMessage(r)
+	this.Id = &v9
+	v10 := randStringMessage(r)
+	this.SourceId = &v10
+	v11 := randStringMessage(r)
+	this.SourceAddr = &v11
+	v12 := r.Uint32()
+	this.Ttl = &v12
 	if !easy && r.Intn(10) != 0 {
 		this.XXX_unrecognized = randUnrecognizedMessage(r, 5)
 	}
@@ -1071,8 +1283,8 @@ func NewPopulatedForwardJoin(r randyMessage, easy bool) *ForwardJoin {
 
 func NewPopulatedDisconnect(r randyMessage, easy bool) *Disconnect {
 	this := &Disconnect{}
-	v10 := randStringMessage(r)
-	this.Id = &v10
+	v13 := randStringMessage(r)
+	this.Id = &v13
 	if !easy && r.Intn(10) != 0 {
 		this.XXX_unrecognized = randUnrecognizedMessage(r, 2)
 	}
@@ -1081,12 +1293,12 @@ func NewPopulatedDisconnect(r randyMessage, easy bool) *Disconnect {
 
 func NewPopulatedShuffle(r randyMessage, easy bool) *Shuffle {
 	this := &Shuffle{}
-	v11 := randStringMessage(r)
-	this.Id = &v11
+	v14 := randStringMessage(r)
+	this.Id = &v14
 	if r.Intn(10) != 0 {
-		v12 := r.Intn(10)
-		this.Candidates = make([]string, v12)
-		for i := 0; i < v12; i++ {
+		v15 := r.Intn(10)
+		this.Candidates = make([]string, v15)
+		for i := 0; i < v15; i++ {
 			this.Candidates[i] = randStringMessage(r)
 		}
 	}
@@ -1098,12 +1310,12 @@ func NewPopulatedShuffle(r randyMessage, easy bool) *Shuffle {
 
 func NewPopulatedShuffleReply(r randyMessage, easy bool) *ShuffleReply {
 	this := &ShuffleReply{}
-	v13 := randStringMessage(r)
-	this.Id = &v13
+	v16 := randStringMessage(r)
+	this.Id = &v16
 	if r.Intn(10) != 0 {
-		v14 := r.Intn(10)
-		this.Candidates = make([]string, v14)
-		for i := 0; i < v14; i++ {
+		v17 := r.Intn(10)
+		this.Candidates = make([]string, v17)
+		for i := 0; i < v17; i++ {
 			this.Candidates[i] = randStringMessage(r)
 		}
 	}
@@ -1130,9 +1342,9 @@ func randUTF8RuneMessage(r randyMessage) rune {
 	return res
 }
 func randStringMessage(r randyMessage) string {
-	v15 := r.Intn(100)
-	tmps := make([]rune, v15)
-	for i := 0; i < v15; i++ {
+	v18 := r.Intn(100)
+	tmps := make([]rune, v18)
+	for i := 0; i < v18; i++ {
 		tmps[i] = randUTF8RuneMessage(r)
 	}
 	return string(tmps)
@@ -1154,11 +1366,11 @@ func randFieldMessage(data []byte, r randyMessage, fieldNumber int, wire int) []
 	switch wire {
 	case 0:
 		data = encodeVarintPopulateMessage(data, uint64(key))
-		v16 := r.Int63()
+		v19 := r.Int63()
 		if r.Intn(2) == 0 {
-			v16 *= -1
+			v19 *= -1
 		}
-		data = encodeVarintPopulateMessage(data, uint64(v16))
+		data = encodeVarintPopulateMessage(data, uint64(v19))
 	case 1:
 		data = encodeVarintPopulateMessage(data, uint64(key))
 		data = append(data, byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)))
@@ -1263,6 +1475,47 @@ func (m *Neighbor) MarshalTo(data []byte) (n int, err error) {
 		i++
 		i = encodeVarintMessage(data, i, uint64(len(*m.Id)))
 		i += copy(data[i:], *m.Id)
+	}
+	if m.Priority != nil {
+		data[i] = 0x10
+		i++
+		i = encodeVarintMessage(data, i, uint64(*m.Priority))
+	}
+	if m.XXX_unrecognized != nil {
+		i += copy(data[i:], m.XXX_unrecognized)
+	}
+	return i, nil
+}
+func (m *NeighborReply) Marshal() (data []byte, err error) {
+	size := m.Size()
+	data = make([]byte, size)
+	n, err := m.MarshalTo(data)
+	if err != nil {
+		return nil, err
+	}
+	return data[:n], nil
+}
+
+func (m *NeighborReply) MarshalTo(data []byte) (n int, err error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if m.Id != nil {
+		data[i] = 0xa
+		i++
+		i = encodeVarintMessage(data, i, uint64(len(*m.Id)))
+		i += copy(data[i:], *m.Id)
+	}
+	if m.Accept != nil {
+		data[i] = 0x10
+		i++
+		if *m.Accept {
+			data[i] = 1
+		} else {
+			data[i] = 0
+		}
+		i++
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(data[i:], m.XXX_unrecognized)
@@ -1465,7 +1718,14 @@ func (this *Neighbor) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings1.Join([]string{`&message.Neighbor{` + `Id:` + valueToGoStringMessage(this.Id, "string"), `XXX_unrecognized:` + fmt1.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings1.Join([]string{`&message.Neighbor{` + `Id:` + valueToGoStringMessage(this.Id, "string"), `Priority:` + valueToGoStringMessage(this.Priority, "message.Neighbor_Priority"), `XXX_unrecognized:` + fmt1.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	return s
+}
+func (this *NeighborReply) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings1.Join([]string{`&message.NeighborReply{` + `Id:` + valueToGoStringMessage(this.Id, "string"), `Accept:` + valueToGoStringMessage(this.Accept, "bool"), `XXX_unrecognized:` + fmt1.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *ForwardJoin) GoString() string {
@@ -1702,6 +1962,15 @@ func (this *Neighbor) VerboseEqual(that interface{}) error {
 	} else if that1.Id != nil {
 		return fmt2.Errorf("Id this(%v) Not Equal that(%v)", this.Id, that1.Id)
 	}
+	if this.Priority != nil && that1.Priority != nil {
+		if *this.Priority != *that1.Priority {
+			return fmt2.Errorf("Priority this(%v) Not Equal that(%v)", *this.Priority, *that1.Priority)
+		}
+	} else if this.Priority != nil {
+		return fmt2.Errorf("this.Priority == nil && that.Priority != nil")
+	} else if that1.Priority != nil {
+		return fmt2.Errorf("Priority this(%v) Not Equal that(%v)", this.Priority, that1.Priority)
+	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return fmt2.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
@@ -1734,6 +2003,101 @@ func (this *Neighbor) Equal(that interface{}) bool {
 	} else if this.Id != nil {
 		return false
 	} else if that1.Id != nil {
+		return false
+	}
+	if this.Priority != nil && that1.Priority != nil {
+		if *this.Priority != *that1.Priority {
+			return false
+		}
+	} else if this.Priority != nil {
+		return false
+	} else if that1.Priority != nil {
+		return false
+	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
+		return false
+	}
+	return true
+}
+func (this *NeighborReply) VerboseEqual(that interface{}) error {
+	if that == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt2.Errorf("that == nil && this != nil")
+	}
+
+	that1, ok := that.(*NeighborReply)
+	if !ok {
+		return fmt2.Errorf("that is not of type *NeighborReply")
+	}
+	if that1 == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt2.Errorf("that is type *NeighborReply but is nil && this != nil")
+	} else if this == nil {
+		return fmt2.Errorf("that is type *NeighborReplybut is not nil && this == nil")
+	}
+	if this.Id != nil && that1.Id != nil {
+		if *this.Id != *that1.Id {
+			return fmt2.Errorf("Id this(%v) Not Equal that(%v)", *this.Id, *that1.Id)
+		}
+	} else if this.Id != nil {
+		return fmt2.Errorf("this.Id == nil && that.Id != nil")
+	} else if that1.Id != nil {
+		return fmt2.Errorf("Id this(%v) Not Equal that(%v)", this.Id, that1.Id)
+	}
+	if this.Accept != nil && that1.Accept != nil {
+		if *this.Accept != *that1.Accept {
+			return fmt2.Errorf("Accept this(%v) Not Equal that(%v)", *this.Accept, *that1.Accept)
+		}
+	} else if this.Accept != nil {
+		return fmt2.Errorf("this.Accept == nil && that.Accept != nil")
+	} else if that1.Accept != nil {
+		return fmt2.Errorf("Accept this(%v) Not Equal that(%v)", this.Accept, that1.Accept)
+	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
+		return fmt2.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+	}
+	return nil
+}
+func (this *NeighborReply) Equal(that interface{}) bool {
+	if that == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	}
+
+	that1, ok := that.(*NeighborReply)
+	if !ok {
+		return false
+	}
+	if that1 == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	} else if this == nil {
+		return false
+	}
+	if this.Id != nil && that1.Id != nil {
+		if *this.Id != *that1.Id {
+			return false
+		}
+	} else if this.Id != nil {
+		return false
+	} else if that1.Id != nil {
+		return false
+	}
+	if this.Accept != nil && that1.Accept != nil {
+		if *this.Accept != *that1.Accept {
+			return false
+		}
+	} else if this.Accept != nil {
+		return false
+	} else if that1.Accept != nil {
 		return false
 	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {

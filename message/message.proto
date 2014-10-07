@@ -25,9 +25,20 @@ message Join {
         required string id = 1;
 }
 
-// The Join request.
+// The Neighbor request.
 message Neighbor {
         required string id = 1;
+        enum Priority {
+                Low  = 0;
+                High = 1;
+        }
+        required Priority priority = 2;
+}
+
+// The reply to Neighbor request.
+message NeighborReply {
+        required string id   = 1;
+        required bool accept = 2;
 }
 
 // The ForwardJoin request.
