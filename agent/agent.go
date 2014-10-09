@@ -39,10 +39,10 @@ type agent struct {
 	cfg *config.Config
 	// Active View.
 	mua   sync.Mutex
-	aView []*node.Node
+	aView map[string]*node.Node
 	// Passive View.
 	mup   sync.Mutex
-	pView []*node.Node
+	pView map[string]*node.Node
 	// TCP listener.
 	ln *net.TCPListener
 	// The codec.
@@ -63,8 +63,8 @@ func NewAgent(cfg *config.Config) Agent {
 	return &agent{
 		cfg:   cfg,
 		codec: codec,
-		aView: make([]*node.Node, 0, cfg.AViewSize),
-		pView: make([]*node.Node, 0, cfg.PViewSize),
+		aView: make(map[string]*node.Node),
+		pView: make(map[string]*node.Node),
 	}
 }
 
@@ -108,17 +108,18 @@ func (ag *agent) serveConn(conn *net.TCPConn) {
 		// Dispatch messages.
 		switch t := msg.(type) {
 		case *message.Join:
-			go ag.handleJoin(conn, msg.(*message.Join))
+			ag.handleJoin(conn, msg.(*message.Join))
 		case *message.Neighbor:
-			go ag.handleNeighbor(conn, msg.(*message.Neighbor))
+			ag.handleNeighbor(conn, msg.(*message.Neighbor))
 		case *message.ForwardJoin:
-			go ag.handleForwardJoin(msg.(*message.ForwardJoin))
+			ag.handleForwardJoin(msg.(*message.ForwardJoin))
 		case *message.Disconnect:
-			go ag.handleDisconnect(msg.(*message.Disconnect))
+			ag.handleDisconnect(msg.(*message.Disconnect))
+			return
 		case *message.Shuffle:
-			go ag.handleShuffle(msg.(*message.Shuffle))
+			ag.handleShuffle(msg.(*message.Shuffle))
 		case *message.UserMessage:
-			go ag.handleUserMessage(msg.(*message.UserMessage))
+			ag.handleUserMessage(msg.(*message.UserMessage))
 		default:
 			log.Errorf("Agent.serveConn(): Unexpected message type: %T\n", t)
 			// TODO(yifan): Now what? Drop the conn?
@@ -126,6 +127,51 @@ func (ag *agent) serveConn(conn *net.TCPConn) {
 			return
 		}
 	}
+}
+
+func chooseRandomNode(view map[string]*node.Node) *node.Node {
+	index := rand.Intn(len(view))
+	i := 0
+	for _, node := range view {
+		if i == index {
+			return node
+		}
+		i++
+	}
+	panic("Must not get here!")
+}
+
+func (ag *agent) addNodeActiveView(node *node.Node) {
+	if node.Id == ag.id {
+		return
+	}
+	if _, existed := ag.aView[node.Id]; existed {
+		return
+	}
+	if len(ag.aView) == ag.cfg.AViewSize {
+		n := chooseRandomNode(ag.aView)
+		ag.disconnect(n)
+		delete(ag.aView, n.Id)
+		ag.addNodePassiveView(n)
+	}
+	ag.aView[node.Id] = node
+}
+
+func (ag *agent) addNodePassiveView(node *node.Node) {
+	if node.Id == ag.id {
+		return
+	}
+	if _, existed := ag.aView[node.Id]; existed {
+		return
+	}
+	if _, existed := ag.pView[node.Id]; existed {
+		return
+	}
+	if len(ag.pView) == ag.cfg.PViewSize {
+		n := chooseRandomNode(ag.pView)
+		delete(ag.pView, n.Id)
+	}
+	ag.pView[node.Id] = node
 }
 
 // handleJoin() handles Join message. If it accepts the request, it will add
@@ -139,25 +185,19 @@ func (ag *agent) handleJoin(conn *net.TCPConn, msg *message.Join) {
 	}
 
 	ag.mua.Lock()
+	ag.mup.Lock()
 	defer ag.mua.Unlock()
+	defer ag.mup.Unlock()
 
-	index := len(ag.aView)
-	if index == ag.cfg.AViewSize {
-		// Choose a victim, send Disconnect.
-		index = rand.Intn(ag.cfg.AViewSize)
-		ag.disconnect(ag.aView[index])
-		// TODO(yifan): Add the node to passive view.
-	}
-	// Add the node to our active view.
-	ag.aView[index] = newNode
+	ag.addNodeActiveView(newNode)
+	go ag.serveConn(newNode.Conn)
+
 	// Send ForwardJoin message to all other the nodes in the active view.
-	for i, node := range ag.aView {
-		if i == index {
+	for _, node := range ag.aView {
+		if node == newNode {
 			continue
 		}
-		if err := ag.forwardJoin(node, newNode); err != nil {
-			// TODO(yifan): Check error and replace the node.
-		}
+		ag.forwardJoin(node, uint32(rand.Intn(ag.cfg.ARWL))) // TODO(yifan): go ag.forwardJoin()
 	}
 }
 
@@ -166,8 +206,6 @@ func (ag *agent) handleJoin(conn *net.TCPConn, msg *message.Join) {
 // If the request is low priority, then the request will only be accepted when
 // there are empty slot in the active view.
 func (ag *agent) handleNeighbor(conn *net.TCPConn, msg *message.Neighbor) {
-	// TODO(yifan): Assert the node is not in active view already.
-	// TODO(yifan): Assert the node is not in passive view already.
 	newNode := &node.Node{
 		Id:   msg.GetId(),
 		Addr: conn.RemoteAddr().String(),
@@ -175,41 +213,68 @@ func (ag *agent) handleNeighbor(conn *net.TCPConn, msg *message.Neighbor) {
 	}
 
 	ag.mua.Lock()
+	ag.mup.Lock()
 	defer ag.mua.Unlock()
+	defer ag.mup.Unlock()
 
-	index := len(ag.aView)
-	if index == ag.cfg.AViewSize {
+	if len(ag.aView) == ag.cfg.AViewSize {
 		if msg.GetPriority() == message.Neighbor_Low {
-			ag.rejectNeighbor(newNode)
+			ag.rejectNeighbor(newNode) // TODO(yifan): go ag.rejectNeighbor()
 			// TODO(yifan): Add the node to passive view.
 			return
 		}
-		// Choose a victim, send Disconnect.
-		index = rand.Intn(ag.cfg.AViewSize)
-		ag.disconnect(ag.aView[index])
-		// TODO(yifan): Add the node to passive view.
 	}
-	// Add the node to our active view.
-	ag.aView[index] = newNode
-	ag.acceptNeighbor(newNode)
-	// TODO(yifan): Check error.
+	ag.addNodeActiveView(newNode)
+	go ag.serveConn(newNode.Conn)
+	ag.acceptNeighbor(newNode) // TODO(yifan): go ag.acceptNeighbor()
 	return
 }
 
 // handleForwardJoin() handles the ForwardJoin message, and decides whether
 // it will add the original sender to the active view or passive view.
 func (ag *agent) handleForwardJoin(msg *message.ForwardJoin) {
-	fmt.Println("Fill me in")
-	// if accept in active view. Send Neighbor and wait for reply.
-	// else, add to passive view.
-	// if ttl > 0, forward.
+	from, ttl := msg.GetId(), msg.GetTtl()
+	newNode := &node.Node{
+		Id:   msg.GetSourceId(),
+		Addr: msg.GetSourceAddr(),
+	}
+
+	ag.mua.Lock()
+	ag.mup.Lock()
+	defer ag.mua.Unlock()
+	defer ag.mup.Unlock()
+
+	if ttl == 0 || len(ag.aView) == 1 { // TODO(yifan): Loose this?
+		ag.neighbor(newNode, message.Neighbor_High)
+		return
+	}
+	if ttl == uint32(ag.cfg.PRWL) {
+		ag.addNodePassiveView(newNode)
+	}
+	for i, node := range ag.aView {
+		if i == from {
+			continue
+		}
+		ag.forwardJoin(node, ttl-1) // TODO(yifan): go ag.forwardJoin()
+	}
 	return
 }
 
 // handleDisconnect() handles Disconnect message. It will replace the node
 // with another node from the passive view. And send Neighbor message to it.
 func (ag *agent) handleDisconnect(msg *message.Disconnect) {
-	fmt.Println("Fill me in")
+	id := msg.GetId()
+
+	ag.mua.Lock()
+	ag.mup.Lock()
+	defer ag.mua.Unlock()
+	defer ag.mup.Unlock()
+
+	node, existed := ag.aView[id]
+	if !existed {
+		return
+	}
+	ag.pView[id] = node
 	return
 }
 
@@ -229,7 +294,12 @@ func (ag *agent) handleShuffleReply(msg *message.ShuffleReply) {
 // handleUserMessage() handles user defined messages. It will forward the message
 // to the nodes in its active view.
 func (ag *agent) handleUserMessage(msg *message.UserMessage) {
-	fmt.Println("Fill me in")
+	ag.mua.Lock()
+	defer ag.mua.Unlock()
+
+	for _, node := range ag.aView {
+		ag.userMessage(node, msg) // TODO(yifan) go ag.userMessage
+	}
 	return
 }
 
