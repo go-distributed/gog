@@ -11,7 +11,7 @@ import (
 	"github.com/go-distributed/gog/message"
 	"github.com/go-distributed/gog/node"
 
-	log "github.com/golang/glog"
+	log "github.com/go-distributed/gog/log" // DEBUG
 )
 
 // Agent describes the interface of an agent.
@@ -20,7 +20,7 @@ type Agent interface {
 	// incoming connections.
 	Serve() error
 	// Join joins the agent to the cluster.
-	Join(addr ...string) error
+	Join(addr string) error
 	// Leave causes the agent to leave the cluster.
 	Leave() error
 	// Broadcast broadcasts a message to the cluster.
@@ -61,6 +61,7 @@ func NewAgent(cfg *config.Config) Agent {
 	codec.Register(&message.ShuffleReply{})
 
 	return &agent{
+		id:    cfg.AddrStr, // TODO(yifan): other id.
 		cfg:   cfg,
 		codec: codec,
 		aView: make(map[string]*node.Node),
@@ -73,6 +74,7 @@ func NewAgent(cfg *config.Config) Agent {
 func (ag *agent) Serve() error {
 	ln, err := net.ListenTCP(ag.cfg.Net, ag.cfg.LocalTCPAddr)
 	if err != nil {
+		log.Errorf("Serve() Cannot listen %v\n", err)
 		return err
 	}
 	ag.ln = ln
@@ -314,8 +316,34 @@ func (ag *agent) handleUserMessage(msg *message.UserMessage) {
 
 // Join joins the node to the cluster by contacting the nodes provied in the
 // list.
-func (ag *agent) Join(addr ...string) error {
-	return fmt.Errorf("Fill me in")
+func (ag *agent) Join(addr string) error {
+	node := &node.Node{
+		Id:   addr,
+		Addr: addr,
+	}
+	tcpAddr, err := net.ResolveTCPAddr(ag.cfg.Net, node.Addr)
+	if err != nil {
+		// TODO(yifan) log.
+		return err
+	}
+	conn, err := net.DialTCP(ag.cfg.Net, nil, tcpAddr)
+	if err != nil {
+		// TODO(yifan) log.
+		return err
+	}
+	node.Conn = conn
+	if err := ag.join(node); err != nil {
+		return err
+	}
+
+	ag.mua.Lock()
+	ag.mup.Lock()
+	defer ag.mua.Unlock()
+	defer ag.mup.Unlock()
+
+	ag.addNodeActiveView(node)
+	go ag.serveConn(node.Conn)
+	return nil
 }
 
 // Leave causes the agent to leave the cluster.

@@ -54,6 +54,13 @@ func (ag *agent) acceptNeighbor(node *node.Node) error {
 	return ag.codec.WriteMsg(msg, node.Conn)
 }
 
+func (ag *agent) join(node *node.Node) error {
+	msg := &message.Join{
+		Id: proto.String(ag.id),
+	}
+	return ag.codec.WriteMsg(msg, node.Conn)
+}
+
 // neighbor() sends a Neighbor message, and wait for the reply.
 // If the other side accepts the request, we add the node to the active view.
 func (ag *agent) neighbor(node *node.Node, priority message.Neighbor_Priority) (error, bool) {

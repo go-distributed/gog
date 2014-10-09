@@ -5,9 +5,12 @@ import (
 	"encoding/binary"
 	"errors"
 	"io"
+	"net"
 	"reflect"
 
 	"code.google.com/p/gogoprotobuf/proto"
+
+	log "github.com/go-distributed/gog/log" // DEBUG
 )
 
 const (
@@ -69,6 +72,7 @@ func (pc *ProtobufCodec) Register(msg proto.Message) {
 
 // WriteMsg encodes a message to bytes and writes it to the io.Writer.
 func (pc *ProtobufCodec) WriteMsg(msg proto.Message, w io.Writer) error {
+	log.Infoln("Send:", msg, "to:", w.(*net.TCPConn).RemoteAddr())
 	index, existed := pc.messageIndices[reflect.TypeOf(msg)]
 	if !existed {
 		return ErrMessageNotRegistered
@@ -120,5 +124,6 @@ func (pc *ProtobufCodec) ReadMsg(r io.Reader) (proto.Message, error) {
 	if err := proto.Unmarshal(b[1:], msg); err != nil {
 		return nil, err
 	}
+	log.Infoln("Recv:", msg, "from:", r.(*net.TCPConn).RemoteAddr())
 	return msg, nil
 }
