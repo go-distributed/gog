@@ -129,6 +129,8 @@ func (ag *agent) serveConn(conn *net.TCPConn) {
 	}
 }
 
+// chooseRandomNode() chooses a random node from the active view
+// or passive view.
 func chooseRandomNode(view map[string]*node.Node) *node.Node {
 	index := rand.Intn(len(view))
 	i := 0
@@ -141,6 +143,11 @@ func chooseRandomNode(view map[string]*node.Node) *node.Node {
 	panic("Must not get here!")
 }
 
+// addNodeActiveView() adds the node to the active view. If
+// the active view is full, it will move one node from the active
+// view to the passive view before adding the node.
+// If the passive view is also full, it will drop a random node
+// in the passive view.
 func (ag *agent) addNodeActiveView(node *node.Node) {
 	if node.Id == ag.id {
 		return
@@ -157,6 +164,8 @@ func (ag *agent) addNodeActiveView(node *node.Node) {
 	ag.aView[node.Id] = node
 }
 
+// addNodePassiveView() adds a node to the passive view. If
+// the passive view is full, it will drop a random node.
 func (ag *agent) addNodePassiveView(node *node.Node) {
 	if node.Id == ag.id {
 		return
