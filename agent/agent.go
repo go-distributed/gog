@@ -248,7 +248,7 @@ func (ag *agent) handleNeighbor(conn *net.TCPConn, msg *message.Neighbor) {
 // handleForwardJoin() handles the ForwardJoin message, and decides whether
 // it will add the original sender to the active view or passive view.
 func (ag *agent) handleForwardJoin(msg *message.ForwardJoin) {
-	from, ttl := msg.GetId(), msg.GetTtl()
+	ttl := msg.GetTtl()
 	newNode := &node.Node{
 		Id:   msg.GetSourceId(),
 		Addr: msg.GetSourceAddr(),
@@ -268,12 +268,8 @@ func (ag *agent) handleForwardJoin(msg *message.ForwardJoin) {
 	if ttl == uint32(ag.cfg.PRWL) {
 		ag.addNodePassiveView(newNode)
 	}
-	for i, node := range ag.aView {
-		if i == from {
-			continue
-		}
-		ag.forwardJoin(node, newNode, ttl-1) // TODO(yifan): go ag.forwardJoin()
-	}
+	node := chooseRandomNode(ag.aView)
+	ag.forwardJoin(node, newNode, ttl-1) // TODO(yifan): go ag.forwardJoin()
 	return
 }
 
