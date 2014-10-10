@@ -260,9 +260,8 @@ func (ag *agent) handleForwardJoin(msg *message.ForwardJoin) {
 	defer ag.mup.Unlock()
 
 	if ttl == 0 || len(ag.aView) == 1 { // TODO(yifan): Loose this?
-		if _, existed := ag.aView[newNode.Id]; !existed {
-			ret, err := ag.neighbor(newNode, message.Neighbor_High)
-			fmt.Println("neighbor ret", ret, err)
+		if ag.id != newNode.Id && ag.aView[newNode.Id] == nil {
+			ag.neighbor(newNode, message.Neighbor_High)
 		}
 		return
 	}
