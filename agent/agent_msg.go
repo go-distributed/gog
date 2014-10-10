@@ -26,11 +26,11 @@ func (ag *agent) disconnect(node *node.Node) {
 // forwardJoin() sends a ForwardJoin message to the node. The message
 // will include the Id and Addr of the source node, as the receiver might
 // use these information to establish a connection.
-func (ag *agent) forwardJoin(node *node.Node, ttl uint32) error {
+func (ag *agent) forwardJoin(node, newNode *node.Node, ttl uint32) error {
 	msg := &message.ForwardJoin{
 		Id:         proto.String(ag.id),
-		SourceId:   proto.String(node.Id),
-		SourceAddr: proto.String(node.Addr),
+		SourceId:   proto.String(newNode.Id),
+		SourceAddr: proto.String(newNode.Addr),
 		Ttl:        proto.Uint32(ttl),
 	}
 	return ag.codec.WriteMsg(msg, node.Conn)
@@ -56,7 +56,8 @@ func (ag *agent) acceptNeighbor(node *node.Node) error {
 
 func (ag *agent) join(node *node.Node) error {
 	msg := &message.Join{
-		Id: proto.String(ag.id),
+		Id:   proto.String(ag.id),
+		Addr: proto.String(ag.cfg.AddrStr),
 	}
 	return ag.codec.WriteMsg(msg, node.Conn)
 }
@@ -79,6 +80,7 @@ func (ag *agent) neighbor(node *node.Node, priority message.Neighbor_Priority) (
 	}
 	msg := &message.Neighbor{
 		Id:       proto.String(ag.id),
+		Addr:     proto.String(ag.cfg.AddrStr),
 		Priority: priority.Enum(),
 	}
 	if err := ag.codec.WriteMsg(msg, node.Conn); err != nil {
@@ -98,7 +100,7 @@ func (ag *agent) neighbor(node *node.Node, priority message.Neighbor_Priority) (
 	}
 	if reply.GetAccept() {
 		ag.addNodeActiveView(node)
-		ag.serveConn(node.Conn)
+		go ag.serveConn(node.Conn)
 		return nil, true
 	}
 	ag.addNodePassiveView(node)

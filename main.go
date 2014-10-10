@@ -17,10 +17,11 @@ func main() {
 		return
 	}
 	ag := agent.NewAgent(config)
+	fmt.Printf("serving at %v...\n", config.AddrStr)
+	go ag.Serve()
 	if peer != "" {
 		fmt.Println("ready to join", peer)
 		ag.Join(peer)
 	}
-	fmt.Printf("serving at %v...\n", config.AddrStr)
-	ag.Serve()
+	select{}
 }

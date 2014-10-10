@@ -5,6 +5,7 @@ import (
 	"math/rand" // TODO(yifan): Need to change this??
 	"net"
 	"sync"
+	"time"
 
 	"github.com/go-distributed/gog/codec"
 	"github.com/go-distributed/gog/config"
@@ -56,6 +57,8 @@ func NewAgent(cfg *config.Config) Agent {
 	codec.Register(&message.UserMessage{})
 	codec.Register(&message.Join{})
 	codec.Register(&message.ForwardJoin{})
+	codec.Register(&message.Neighbor{})
+	codec.Register(&message.NeighborReply{})
 	codec.Register(&message.Disconnect{})
 	codec.Register(&message.Shuffle{})
 	codec.Register(&message.ShuffleReply{})
@@ -72,6 +75,7 @@ func NewAgent(cfg *config.Config) Agent {
 // Serve starts a standalone agent, waiting for
 // incoming connections.
 func (ag *agent) Serve() error {
+	go ag.listView() // debug
 	ln, err := net.ListenTCP(ag.cfg.Net, ag.cfg.LocalTCPAddr)
 	if err != nil {
 		log.Errorf("Serve() Cannot listen %v\n", err)
@@ -191,7 +195,7 @@ func (ag *agent) addNodePassiveView(node *node.Node) {
 func (ag *agent) handleJoin(conn *net.TCPConn, msg *message.Join) {
 	newNode := &node.Node{
 		Id:   msg.GetId(),
-		Addr: conn.RemoteAddr().String(),
+		Addr: msg.GetAddr(),
 		Conn: conn,
 	}
 
@@ -208,7 +212,7 @@ func (ag *agent) handleJoin(conn *net.TCPConn, msg *message.Join) {
 		if node == newNode {
 			continue
 		}
-		ag.forwardJoin(node, uint32(rand.Intn(ag.cfg.ARWL))) // TODO(yifan): go ag.forwardJoin()
+		ag.forwardJoin(node, newNode, uint32(rand.Intn(ag.cfg.ARWL))) // TODO(yifan): go ag.forwardJoin()
 	}
 }
 
@@ -219,7 +223,7 @@ func (ag *agent) handleJoin(conn *net.TCPConn, msg *message.Join) {
 func (ag *agent) handleNeighbor(conn *net.TCPConn, msg *message.Neighbor) {
 	newNode := &node.Node{
 		Id:   msg.GetId(),
-		Addr: conn.RemoteAddr().String(),
+		Addr: msg.GetAddr(),
 		Conn: conn,
 	}
 
@@ -256,7 +260,8 @@ func (ag *agent) handleForwardJoin(msg *message.ForwardJoin) {
 	defer ag.mup.Unlock()
 
 	if ttl == 0 || len(ag.aView) == 1 { // TODO(yifan): Loose this?
-		ag.neighbor(newNode, message.Neighbor_High)
+		ret, err := ag.neighbor(newNode, message.Neighbor_High)
+		fmt.Println("neighbor ret", ret, err)
 		return
 	}
 	if ttl == uint32(ag.cfg.PRWL) {
@@ -266,7 +271,7 @@ func (ag *agent) handleForwardJoin(msg *message.ForwardJoin) {
 		if i == from {
 			continue
 		}
-		ag.forwardJoin(node, ttl-1) // TODO(yifan): go ag.forwardJoin()
+		ag.forwardJoin(node, newNode, ttl-1) // TODO(yifan): go ag.forwardJoin()
 	}
 	return
 }
@@ -361,4 +366,23 @@ func (ag *agent) Broadcast(msg []byte) error {
 // delay.
 func (ag *agent) Count(addr string) (chan *node.Node, error) {
 	return nil, fmt.Errorf("Fill me in")
+}
+
+func (ag *agent) listView() {
+	tick := time.Tick(5 * time.Second)
+	for {
+		<-tick
+		ag.mua.Lock()
+		ag.mup.Lock()
+		fmt.Println("AView:")
+		for _, node := range ag.aView {
+			fmt.Println(node)
+		}
+		fmt.Println("PView:")
+		for _, node := range ag.pView {
+			fmt.Println(node)
+		}
+		ag.mua.Unlock()
+		ag.mup.Unlock()
+	}
 }

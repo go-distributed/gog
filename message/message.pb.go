@@ -108,6 +108,7 @@ func (m *UserMessage) GetPayload() [][]byte {
 // The Join request.
 type Join struct {
 	Id               *string `protobuf:"bytes,1,req,name=id" json:"id,omitempty"`
+	Addr             *string `protobuf:"bytes,2,req,name=addr" json:"addr,omitempty"`
 	XXX_unrecognized []byte  `json:"-"`
 }
 
@@ -121,10 +122,18 @@ func (m *Join) GetId() string {
 	return ""
 }
 
+func (m *Join) GetAddr() string {
+	if m != nil && m.Addr != nil {
+		return *m.Addr
+	}
+	return ""
+}
+
 // The Neighbor request.
 type Neighbor struct {
 	Id               *string            `protobuf:"bytes,1,req,name=id" json:"id,omitempty"`
-	Priority         *Neighbor_Priority `protobuf:"varint,2,req,name=priority,enum=message.Neighbor_Priority" json:"priority,omitempty"`
+	Addr             *string            `protobuf:"bytes,2,req,name=addr" json:"addr,omitempty"`
+	Priority         *Neighbor_Priority `protobuf:"varint,3,req,name=priority,enum=message.Neighbor_Priority" json:"priority,omitempty"`
 	XXX_unrecognized []byte             `json:"-"`
 }
 
@@ -134,6 +143,13 @@ func (*Neighbor) ProtoMessage() {}
 func (m *Neighbor) GetId() string {
 	if m != nil && m.Id != nil {
 		return *m.Id
+	}
+	return ""
+}
+
+func (m *Neighbor) GetAddr() string {
+	if m != nil && m.Addr != nil {
+		return *m.Addr
 	}
 	return ""
 }
@@ -406,6 +422,29 @@ func (m *Join) Unmarshal(data []byte) error {
 			s := string(data[index:postIndex])
 			m.Id = &s
 			index = postIndex
+		case 2:
+			if wireType != 2 {
+				return code_google_com_p_gogoprotobuf_proto.ErrWrongType
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if index >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[index]
+				index++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			postIndex := index + int(stringLen)
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			s := string(data[index:postIndex])
+			m.Addr = &s
+			index = postIndex
 		default:
 			var sizeOfWire int
 			for {
@@ -472,6 +511,29 @@ func (m *Neighbor) Unmarshal(data []byte) error {
 			m.Id = &s
 			index = postIndex
 		case 2:
+			if wireType != 2 {
+				return code_google_com_p_gogoprotobuf_proto.ErrWrongType
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if index >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[index]
+				index++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			postIndex := index + int(stringLen)
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			s := string(data[index:postIndex])
+			m.Addr = &s
+			index = postIndex
+		case 3:
 			if wireType != 0 {
 				return code_google_com_p_gogoprotobuf_proto.ErrWrongType
 			}
@@ -979,6 +1041,7 @@ func (this *Join) String() string {
 	}
 	s := strings.Join([]string{`&Join{`,
 		`Id:` + valueToStringMessage(this.Id) + `,`,
+		`Addr:` + valueToStringMessage(this.Addr) + `,`,
 		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
@@ -990,6 +1053,7 @@ func (this *Neighbor) String() string {
 	}
 	s := strings.Join([]string{`&Neighbor{`,
 		`Id:` + valueToStringMessage(this.Id) + `,`,
+		`Addr:` + valueToStringMessage(this.Addr) + `,`,
 		`Priority:` + valueToStringMessage(this.Priority) + `,`,
 		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
@@ -1090,6 +1154,10 @@ func (m *Join) Size() (n int) {
 		l = len(*m.Id)
 		n += 1 + l + sovMessage(uint64(l))
 	}
+	if m.Addr != nil {
+		l = len(*m.Addr)
+		n += 1 + l + sovMessage(uint64(l))
+	}
 	if m.XXX_unrecognized != nil {
 		n += len(m.XXX_unrecognized)
 	}
@@ -1100,6 +1168,10 @@ func (m *Neighbor) Size() (n int) {
 	_ = l
 	if m.Id != nil {
 		l = len(*m.Id)
+		n += 1 + l + sovMessage(uint64(l))
+	}
+	if m.Addr != nil {
+		l = len(*m.Addr)
 		n += 1 + l + sovMessage(uint64(l))
 	}
 	if m.Priority != nil {
@@ -1235,30 +1307,34 @@ func NewPopulatedJoin(r randyMessage, easy bool) *Join {
 	this := &Join{}
 	v4 := randStringMessage(r)
 	this.Id = &v4
-	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMessage(r, 2)
-	}
-	return this
-}
-
-func NewPopulatedNeighbor(r randyMessage, easy bool) *Neighbor {
-	this := &Neighbor{}
 	v5 := randStringMessage(r)
-	this.Id = &v5
-	v6 := Neighbor_Priority([]int32{0, 1}[r.Intn(2)])
-	this.Priority = &v6
+	this.Addr = &v5
 	if !easy && r.Intn(10) != 0 {
 		this.XXX_unrecognized = randUnrecognizedMessage(r, 3)
 	}
 	return this
 }
 
+func NewPopulatedNeighbor(r randyMessage, easy bool) *Neighbor {
+	this := &Neighbor{}
+	v6 := randStringMessage(r)
+	this.Id = &v6
+	v7 := randStringMessage(r)
+	this.Addr = &v7
+	v8 := Neighbor_Priority([]int32{0, 1}[r.Intn(2)])
+	this.Priority = &v8
+	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedMessage(r, 4)
+	}
+	return this
+}
+
 func NewPopulatedNeighborReply(r randyMessage, easy bool) *NeighborReply {
 	this := &NeighborReply{}
-	v7 := randStringMessage(r)
-	this.Id = &v7
-	v8 := bool(r.Intn(2) == 0)
-	this.Accept = &v8
+	v9 := randStringMessage(r)
+	this.Id = &v9
+	v10 := bool(r.Intn(2) == 0)
+	this.Accept = &v10
 	if !easy && r.Intn(10) != 0 {
 		this.XXX_unrecognized = randUnrecognizedMessage(r, 3)
 	}
@@ -1267,14 +1343,14 @@ func NewPopulatedNeighborReply(r randyMessage, easy bool) *NeighborReply {
 
 func NewPopulatedForwardJoin(r randyMessage, easy bool) *ForwardJoin {
 	this := &ForwardJoin{}
-	v9 := randStringMessage(r)
-	this.Id = &v9
-	v10 := randStringMessage(r)
-	this.SourceId = &v10
 	v11 := randStringMessage(r)
-	this.SourceAddr = &v11
-	v12 := r.Uint32()
-	this.Ttl = &v12
+	this.Id = &v11
+	v12 := randStringMessage(r)
+	this.SourceId = &v12
+	v13 := randStringMessage(r)
+	this.SourceAddr = &v13
+	v14 := r.Uint32()
+	this.Ttl = &v14
 	if !easy && r.Intn(10) != 0 {
 		this.XXX_unrecognized = randUnrecognizedMessage(r, 5)
 	}
@@ -1283,8 +1359,8 @@ func NewPopulatedForwardJoin(r randyMessage, easy bool) *ForwardJoin {
 
 func NewPopulatedDisconnect(r randyMessage, easy bool) *Disconnect {
 	this := &Disconnect{}
-	v13 := randStringMessage(r)
-	this.Id = &v13
+	v15 := randStringMessage(r)
+	this.Id = &v15
 	if !easy && r.Intn(10) != 0 {
 		this.XXX_unrecognized = randUnrecognizedMessage(r, 2)
 	}
@@ -1293,12 +1369,12 @@ func NewPopulatedDisconnect(r randyMessage, easy bool) *Disconnect {
 
 func NewPopulatedShuffle(r randyMessage, easy bool) *Shuffle {
 	this := &Shuffle{}
-	v14 := randStringMessage(r)
-	this.Id = &v14
+	v16 := randStringMessage(r)
+	this.Id = &v16
 	if r.Intn(10) != 0 {
-		v15 := r.Intn(10)
-		this.Candidates = make([]string, v15)
-		for i := 0; i < v15; i++ {
+		v17 := r.Intn(10)
+		this.Candidates = make([]string, v17)
+		for i := 0; i < v17; i++ {
 			this.Candidates[i] = randStringMessage(r)
 		}
 	}
@@ -1310,12 +1386,12 @@ func NewPopulatedShuffle(r randyMessage, easy bool) *Shuffle {
 
 func NewPopulatedShuffleReply(r randyMessage, easy bool) *ShuffleReply {
 	this := &ShuffleReply{}
-	v16 := randStringMessage(r)
-	this.Id = &v16
+	v18 := randStringMessage(r)
+	this.Id = &v18
 	if r.Intn(10) != 0 {
-		v17 := r.Intn(10)
-		this.Candidates = make([]string, v17)
-		for i := 0; i < v17; i++ {
+		v19 := r.Intn(10)
+		this.Candidates = make([]string, v19)
+		for i := 0; i < v19; i++ {
 			this.Candidates[i] = randStringMessage(r)
 		}
 	}
@@ -1342,9 +1418,9 @@ func randUTF8RuneMessage(r randyMessage) rune {
 	return res
 }
 func randStringMessage(r randyMessage) string {
-	v18 := r.Intn(100)
-	tmps := make([]rune, v18)
-	for i := 0; i < v18; i++ {
+	v20 := r.Intn(100)
+	tmps := make([]rune, v20)
+	for i := 0; i < v20; i++ {
 		tmps[i] = randUTF8RuneMessage(r)
 	}
 	return string(tmps)
@@ -1366,11 +1442,11 @@ func randFieldMessage(data []byte, r randyMessage, fieldNumber int, wire int) []
 	switch wire {
 	case 0:
 		data = encodeVarintPopulateMessage(data, uint64(key))
-		v19 := r.Int63()
+		v21 := r.Int63()
 		if r.Intn(2) == 0 {
-			v19 *= -1
+			v21 *= -1
 		}
-		data = encodeVarintPopulateMessage(data, uint64(v19))
+		data = encodeVarintPopulateMessage(data, uint64(v21))
 	case 1:
 		data = encodeVarintPopulateMessage(data, uint64(key))
 		data = append(data, byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)))
@@ -1450,6 +1526,12 @@ func (m *Join) MarshalTo(data []byte) (n int, err error) {
 		i = encodeVarintMessage(data, i, uint64(len(*m.Id)))
 		i += copy(data[i:], *m.Id)
 	}
+	if m.Addr != nil {
+		data[i] = 0x12
+		i++
+		i = encodeVarintMessage(data, i, uint64(len(*m.Addr)))
+		i += copy(data[i:], *m.Addr)
+	}
 	if m.XXX_unrecognized != nil {
 		i += copy(data[i:], m.XXX_unrecognized)
 	}
@@ -1476,8 +1558,14 @@ func (m *Neighbor) MarshalTo(data []byte) (n int, err error) {
 		i = encodeVarintMessage(data, i, uint64(len(*m.Id)))
 		i += copy(data[i:], *m.Id)
 	}
+	if m.Addr != nil {
+		data[i] = 0x12
+		i++
+		i = encodeVarintMessage(data, i, uint64(len(*m.Addr)))
+		i += copy(data[i:], *m.Addr)
+	}
 	if m.Priority != nil {
-		data[i] = 0x10
+		data[i] = 0x18
 		i++
 		i = encodeVarintMessage(data, i, uint64(*m.Priority))
 	}
@@ -1711,14 +1799,14 @@ func (this *Join) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings1.Join([]string{`&message.Join{` + `Id:` + valueToGoStringMessage(this.Id, "string"), `XXX_unrecognized:` + fmt1.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings1.Join([]string{`&message.Join{` + `Id:` + valueToGoStringMessage(this.Id, "string"), `Addr:` + valueToGoStringMessage(this.Addr, "string"), `XXX_unrecognized:` + fmt1.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *Neighbor) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings1.Join([]string{`&message.Neighbor{` + `Id:` + valueToGoStringMessage(this.Id, "string"), `Priority:` + valueToGoStringMessage(this.Priority, "message.Neighbor_Priority"), `XXX_unrecognized:` + fmt1.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings1.Join([]string{`&message.Neighbor{` + `Id:` + valueToGoStringMessage(this.Id, "string"), `Addr:` + valueToGoStringMessage(this.Addr, "string"), `Priority:` + valueToGoStringMessage(this.Priority, "message.Neighbor_Priority"), `XXX_unrecognized:` + fmt1.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *NeighborReply) GoString() string {
@@ -1894,6 +1982,15 @@ func (this *Join) VerboseEqual(that interface{}) error {
 	} else if that1.Id != nil {
 		return fmt2.Errorf("Id this(%v) Not Equal that(%v)", this.Id, that1.Id)
 	}
+	if this.Addr != nil && that1.Addr != nil {
+		if *this.Addr != *that1.Addr {
+			return fmt2.Errorf("Addr this(%v) Not Equal that(%v)", *this.Addr, *that1.Addr)
+		}
+	} else if this.Addr != nil {
+		return fmt2.Errorf("this.Addr == nil && that.Addr != nil")
+	} else if that1.Addr != nil {
+		return fmt2.Errorf("Addr this(%v) Not Equal that(%v)", this.Addr, that1.Addr)
+	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return fmt2.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
@@ -1926,6 +2023,15 @@ func (this *Join) Equal(that interface{}) bool {
 	} else if this.Id != nil {
 		return false
 	} else if that1.Id != nil {
+		return false
+	}
+	if this.Addr != nil && that1.Addr != nil {
+		if *this.Addr != *that1.Addr {
+			return false
+		}
+	} else if this.Addr != nil {
+		return false
+	} else if that1.Addr != nil {
 		return false
 	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
@@ -1961,6 +2067,15 @@ func (this *Neighbor) VerboseEqual(that interface{}) error {
 		return fmt2.Errorf("this.Id == nil && that.Id != nil")
 	} else if that1.Id != nil {
 		return fmt2.Errorf("Id this(%v) Not Equal that(%v)", this.Id, that1.Id)
+	}
+	if this.Addr != nil && that1.Addr != nil {
+		if *this.Addr != *that1.Addr {
+			return fmt2.Errorf("Addr this(%v) Not Equal that(%v)", *this.Addr, *that1.Addr)
+		}
+	} else if this.Addr != nil {
+		return fmt2.Errorf("this.Addr == nil && that.Addr != nil")
+	} else if that1.Addr != nil {
+		return fmt2.Errorf("Addr this(%v) Not Equal that(%v)", this.Addr, that1.Addr)
 	}
 	if this.Priority != nil && that1.Priority != nil {
 		if *this.Priority != *that1.Priority {
@@ -2003,6 +2118,15 @@ func (this *Neighbor) Equal(that interface{}) bool {
 	} else if this.Id != nil {
 		return false
 	} else if that1.Id != nil {
+		return false
+	}
+	if this.Addr != nil && that1.Addr != nil {
+		if *this.Addr != *that1.Addr {
+			return false
+		}
+	} else if this.Addr != nil {
+		return false
+	} else if that1.Addr != nil {
 		return false
 	}
 	if this.Priority != nil && that1.Priority != nil {
