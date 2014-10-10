@@ -46,7 +46,7 @@ func ParseConfig() (*Config, error) {
 	flag.IntVar(&cfg.Fanin, "fanin", 5, "The fan-in")
 	flag.IntVar(&cfg.Fanout, "fanout", 5, "The fan-out")
 
-	flag.IntVar(&cfg.AViewSize, "active_view_size", 5, "The size of the active view")
+	flag.IntVar(&cfg.AViewSize, "active_view_size", 2, "The size of the active view")
 	flag.IntVar(&cfg.PViewSize, "passive_view_size", 5, "The size of the passive view")
 
 	flag.IntVar(&cfg.Ka, "ka", 1, "The number of active nodes to shuffle")

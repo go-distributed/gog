@@ -5,7 +5,6 @@ import (
 	"math/rand" // TODO(yifan): Need to change this??
 	"net"
 	"sync"
-	"time"
 
 	"github.com/go-distributed/gog/codec"
 	"github.com/go-distributed/gog/config"
@@ -17,7 +16,7 @@ import (
 
 // Agent describes the interface of an agent.
 type Agent interface {
-	// Serve starts a standalone agent, waiting for
+	// Serve( starts a standalone agent, waiting for
 	// incoming connections.
 	Serve() error
 	// Join joins the agent to the cluster.
@@ -30,6 +29,8 @@ type Agent interface {
 	// nodes, which can be used to compute the broadcast
 	// delay.
 	Count(addr string) (chan *node.Node, error)
+	// List prints the infomation in two views.
+	List()
 }
 
 // agent implements the Agent interface.
@@ -75,7 +76,6 @@ func NewAgent(cfg *config.Config) Agent {
 // Serve starts a standalone agent, waiting for
 // incoming connections.
 func (ag *agent) Serve() error {
-	go ag.listView() // debug
 	ln, err := net.ListenTCP(ag.cfg.Net, ag.cfg.LocalTCPAddr)
 	if err != nil {
 		log.Errorf("Serve() Cannot listen %v\n", err)
@@ -121,7 +121,6 @@ func (ag *agent) serveConn(conn *net.TCPConn) {
 			ag.handleForwardJoin(msg.(*message.ForwardJoin))
 		case *message.Disconnect:
 			ag.handleDisconnect(msg.(*message.Disconnect))
-			return
 		case *message.Shuffle:
 			ag.handleShuffle(msg.(*message.Shuffle))
 		case *message.UserMessage:
@@ -158,7 +157,7 @@ func (ag *agent) addNodeActiveView(node *node.Node) {
 	if node.Id == ag.id {
 		return
 	}
-	if _, existed := ag.aView[node.Id]; existed {
+	if ag.aView[node.Id] != nil {
 		return
 	}
 	if len(ag.aView) == ag.cfg.AViewSize {
@@ -176,10 +175,10 @@ func (ag *agent) addNodePassiveView(node *node.Node) {
 	if node.Id == ag.id {
 		return
 	}
-	if _, existed := ag.aView[node.Id]; existed {
+	if ag.aView[node.Id] != nil {
 		return
 	}
-	if _, existed := ag.pView[node.Id]; existed {
+	if ag.pView[node.Id] != nil {
 		return
 	}
 	if len(ag.pView) == ag.cfg.PViewSize {
@@ -283,9 +282,16 @@ func (ag *agent) handleDisconnect(msg *message.Disconnect) {
 	defer ag.mua.Unlock()
 	defer ag.mup.Unlock()
 
-	node, existed := ag.aView[id]
-	if !existed {
+	node := ag.aView[id]
+	if node == nil {
 		return
+	}
+	delete(ag.aView, node.Id)
+	node.Conn.Close()
+	node.Conn = nil
+	for len(ag.aView) == 0 { // We need at least one active node.
+		n := chooseRandomNode(ag.pView)
+		ag.neighbor(n, message.Neighbor_High)
 	}
 	ag.pView[id] = node
 	return
@@ -365,21 +371,18 @@ func (ag *agent) Count(addr string) (chan *node.Node, error) {
 	return nil, fmt.Errorf("Fill me in")
 }
 
-func (ag *agent) listView() {
-	tick := time.Tick(5 * time.Second)
-	for {
-		<-tick
-		ag.mua.Lock()
-		ag.mup.Lock()
-		fmt.Println("AView:")
-		for _, node := range ag.aView {
-			fmt.Println(node)
-		}
-		fmt.Println("PView:")
-		for _, node := range ag.pView {
-			fmt.Println(node)
-		}
-		ag.mua.Unlock()
-		ag.mup.Unlock()
+func (ag *agent) List() {
+	ag.mua.Lock()
+	ag.mup.Lock()
+	defer ag.mua.Unlock()
+	defer ag.mup.Unlock()
+	fmt.Println("AView:")
+	for _, node := range ag.aView {
+		fmt.Println(node)
 	}
+	fmt.Println("PView:")
+	for _, node := range ag.pView {
+		fmt.Println(node)
+	}
+
 }
