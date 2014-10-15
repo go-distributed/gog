@@ -35,6 +35,8 @@ type Config struct {
 	ARWL int
 	// Passive Random Walk Length.
 	PRWL int
+	// Message life.
+	MLife int
 }
 
 func ParseConfig() (*Config, error) {
@@ -54,6 +56,8 @@ func ParseConfig() (*Config, error) {
 
 	flag.IntVar(&cfg.ARWL, "arwl", 5, "The active random walk length")
 	flag.IntVar(&cfg.PRWL, "prwl", 5, "The passive random walk length")
+
+	flag.IntVar(&cfg.MLife, "msg_life", 500, "The default message life (milliconds)")
 
 	flag.Parse()
 

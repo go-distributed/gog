@@ -6,12 +6,13 @@ import (
 	"math/rand"
 	"testing"
 
+	"code.google.com/p/gogoprotobuf/proto"
 	"github.com/go-distributed/gog/message"
 	"github.com/go-distributed/testify/assert"
 )
 
 const nsInOneSecond = 1000000000 // 10^9
-var payload [][]byte
+var payload []byte
 
 func genRandomMessage(length int) []byte {
 	b := make([]byte, length)
@@ -21,48 +22,40 @@ func genRandomMessage(length int) []byte {
 	return b
 }
 
-func genRandomMessageGroup(num, length int) [][]byte {
-	bb := make([][]byte, num)
-	for i := range bb {
-		bb[i] = genRandomMessage(length)
-	}
-	return bb
-}
-
 func TestRegister(t *testing.T) {
 	umsg := &message.UserMessage{
-		Id:      []byte("localhost:8080"),
-		Payload: [][]byte{[]byte("hello world")},
+		Id:      proto.String("localhost:8080"),
+		Payload: []byte("hello world"),
 	}
 	pc := NewProtobufCodec()
 	pc.Register(umsg)
 	assert.Panics(t, func() { pc.Register(umsg) })
 }
 
-func TestEncodeDecode(t *testing.T) {
+func TestWriteMsgReadMsg(t *testing.T) {
 	umsg1 := &message.UserMessage{
-		Id:      []byte("localhost:8080"),
-		Payload: [][]byte{[]byte("hello")},
+		Id:      proto.String("localhost:8080"),
+		Payload: []byte("hello"),
 	}
 	umsg2 := &message.UserMessage{
-		Id:      []byte("localhost:8080"),
-		Payload: [][]byte{[]byte("world")},
+		Id:      proto.String("localhost:8080"),
+		Payload: []byte("world"),
 	}
 	pc := NewProtobufCodec()
 	pc.Register(umsg1)
 	rw := new(bytes.Buffer)
-	assert.NoError(t, pc.Encode(umsg1, rw))
-	assert.NoError(t, pc.Encode(umsg2, rw))
-	msg1, err := pc.Decode(rw)
-	msg2, err := pc.Decode(rw)
+	assert.NoError(t, pc.WriteMsg(umsg1, rw))
+	assert.NoError(t, pc.WriteMsg(umsg2, rw))
+	msg1, err := pc.ReadMsg(rw)
+	msg2, err := pc.ReadMsg(rw)
 	assert.NoError(t, err)
 	assert.Equal(t, umsg1, msg1)
 	assert.Equal(t, umsg2, msg2)
 }
 
-func BenchmarkEncodeDecode(b *testing.B) {
+func BenchmarkWriteMsgReadMsg(b *testing.B) {
 	umsg := &message.UserMessage{
-		Id:      []byte("localhost:8080"),
+		Id:      proto.String("localhost:8080"),
 		Payload: payload,
 	}
 	pc := NewProtobufCodec()
@@ -70,30 +63,30 @@ func BenchmarkEncodeDecode(b *testing.B) {
 	rw := new(bytes.Buffer)
 
 	for i := 0; i < b.N; i++ {
-		assert.NoError(b, pc.Encode(umsg, rw))
-		_, err := pc.Decode(rw)
+		assert.NoError(b, pc.WriteMsg(umsg, rw))
+		_, err := pc.ReadMsg(rw)
 		assert.NoError(b, err)
 	}
 }
 
-func TestEncodeDecodeThroughput(t *testing.T) {
+func TestWriteMsgReadMsgThroughput(t *testing.T) {
 	var result testing.BenchmarkResult
 
-	fmt.Println("Small Message Payload (10 * 10 bytes)")
-	payload = genRandomMessageGroup(10, 10)
-	result = testing.Benchmark(BenchmarkEncodeDecode)
+	fmt.Println("Small Message Payload (100 bytes)")
+	payload = genRandomMessage(100)
+	result = testing.Benchmark(BenchmarkWriteMsgReadMsg)
 	fmt.Println(result.N, "    ", result.NsPerOp(), "ns/op")
 	fmt.Println("Throughput:", nsInOneSecond/result.NsPerOp()*10*10/1024/1024, "MB/s")
 
-	fmt.Println("Medium Message Payload (100 * 100 bytes)")
-	payload = genRandomMessageGroup(100, 100)
-	result = testing.Benchmark(BenchmarkEncodeDecode)
+	fmt.Println("Medium Message Payload (1000 bytes)")
+	payload = genRandomMessage(1000)
+	result = testing.Benchmark(BenchmarkWriteMsgReadMsg)
 	fmt.Println(result.N, "    ", result.NsPerOp(), "ns/op")
 	fmt.Println("Throughput:", nsInOneSecond/result.NsPerOp()*100*100/1024/1024, "MB/s")
 
-	fmt.Println("Large Message Payload (1000 * 1000 bytes)")
-	payload = genRandomMessageGroup(1000, 1000)
-	result = testing.Benchmark(BenchmarkEncodeDecode)
+	fmt.Println("Large Message Payload (1000*1000 bytes ~1m)")
+	payload = genRandomMessage(1000 * 1000)
+	result = testing.Benchmark(BenchmarkWriteMsgReadMsg)
 	fmt.Println(result.N, "    ", result.NsPerOp(), "ns/op")
 	fmt.Println("Throughput:", nsInOneSecond/result.NsPerOp()*1000*1000/1024/1024, "MB/s")
 

@@ -1,10 +1,10 @@
 package main
 
 import (
-	"os"
 	"bufio"
 	"flag"
 	"fmt"
+	"os"
 
 	"github.com/go-distributed/gog/agent"
 	"github.com/go-distributed/gog/config"
@@ -26,7 +26,7 @@ func main() {
 		ag.Join(peer)
 	}
 
-	input:= bufio.NewReader(os.Stdin)
+	input := bufio.NewReader(os.Stdin)
 	for {
 		fmt.Println("input a message:")
 		bs, err := input.ReadString('\n')
@@ -38,16 +38,6 @@ func main() {
 			ag.List()
 			continue
 		}
-		
+		ag.Broadcast([]byte(bs))
 	}
 }
-
-
-
-
-
-
-
-
-
-

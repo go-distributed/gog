@@ -1,16 +1,20 @@
 package agent
 
 import (
+	"crypto/sha1"
 	"fmt"
 	"math/rand" // TODO(yifan): Need to change this??
 	"net"
 	"sync"
+	"time"
 
+	"github.com/go-distributed/gog/arraymap"
 	"github.com/go-distributed/gog/codec"
 	"github.com/go-distributed/gog/config"
 	"github.com/go-distributed/gog/message"
 	"github.com/go-distributed/gog/node"
 
+	"code.google.com/p/gogoprotobuf/proto"
 	log "github.com/go-distributed/gog/log" // DEBUG
 )
 
@@ -49,6 +53,8 @@ type agent struct {
 	ln *net.TCPListener
 	// The codec.
 	codec codec.Codec
+	// Message Buffer.
+	msgBuffer *arraymap.ArrayMap
 }
 
 // NewAgent creates a new agent.
@@ -65,11 +71,12 @@ func NewAgent(cfg *config.Config) Agent {
 	codec.Register(&message.ShuffleReply{})
 
 	return &agent{
-		id:    cfg.AddrStr, // TODO(yifan): other id.
-		cfg:   cfg,
-		codec: codec,
-		aView: make(map[string]*node.Node),
-		pView: make(map[string]*node.Node),
+		id:        cfg.AddrStr, // TODO(yifan): other id.
+		cfg:       cfg,
+		codec:     codec,
+		aView:     make(map[string]*node.Node),
+		pView:     make(map[string]*node.Node),
+		msgBuffer: arraymap.NewArrayMap(),
 	}
 }
 
@@ -316,6 +323,16 @@ func (ag *agent) handleUserMessage(msg *message.UserMessage) {
 	ag.mua.Lock()
 	defer ag.mua.Unlock()
 
+	ms, err := time.ParseDuration("1ms")
+	if err != nil {
+		panic("failed to parse duration") // Shouldn't happen.
+	}
+	deadline := msg.GetTs() + ms.Nanoseconds()*int64(ag.cfg.MLife)
+	hash := hashMessage(msg.GetPayload())
+	if time.Now().UnixNano() >= deadline || ag.msgBuffer.Has(hash) {
+		return
+	}
+	ag.msgBuffer.Append(hash, msg)
 	for _, node := range ag.aView {
 		ag.userMessage(node, msg) // TODO(yifan) go ag.userMessage
 	}
@@ -360,8 +377,22 @@ func (ag *agent) Leave() error {
 }
 
 // Broadcast broadcasts a message to the cluster.
-func (ag *agent) Broadcast(msg []byte) error {
-	return fmt.Errorf("Fill me in")
+func (ag *agent) Broadcast(payload []byte) error {
+	hash := hashMessage(payload)
+	msg := &message.UserMessage{
+		Id:      proto.String(ag.id),
+		Payload: payload,
+		Ts:      proto.Int64(time.Now().UnixNano()),
+	}
+	ag.msgBuffer.Append(hash, msg)
+	ag.mua.Lock()
+	defer ag.mua.Unlock()
+	for _, node := range ag.aView {
+		if err := ag.userMessage(node, msg); err != nil {
+			// TODO: update view.
+		}
+	}
+	return nil
 }
 
 // Count does a broadcast and returns a channel of
@@ -385,4 +416,8 @@ func (ag *agent) List() {
 		fmt.Println(node)
 	}
 
+}
+
+func hashMessage(msg []byte) [sha1.Size]byte {
+	return sha1.Sum(msg)
 }

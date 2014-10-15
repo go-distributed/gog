@@ -83,9 +83,10 @@ func (x *Neighbor_Priority) UnmarshalJSON(data []byte) error {
 
 // User defined messages.
 type UserMessage struct {
-	Id               *string  `protobuf:"bytes,1,req,name=id" json:"id,omitempty"`
-	Payload          [][]byte `protobuf:"bytes,2,rep,name=payload" json:"payload,omitempty"`
-	XXX_unrecognized []byte   `json:"-"`
+	Id               *string `protobuf:"bytes,1,req,name=id" json:"id,omitempty"`
+	Payload          []byte  `protobuf:"bytes,2,opt,name=payload" json:"payload,omitempty"`
+	Ts               *int64  `protobuf:"varint,3,req,name=ts" json:"ts,omitempty"`
+	XXX_unrecognized []byte  `json:"-"`
 }
 
 func (m *UserMessage) Reset()      { *m = UserMessage{} }
@@ -98,11 +99,18 @@ func (m *UserMessage) GetId() string {
 	return ""
 }
 
-func (m *UserMessage) GetPayload() [][]byte {
+func (m *UserMessage) GetPayload() []byte {
 	if m != nil {
 		return m.Payload
 	}
 	return nil
+}
+
+func (m *UserMessage) GetTs() int64 {
+	if m != nil && m.Ts != nil {
+		return *m.Ts
+	}
+	return 0
 }
 
 // The Join request.
@@ -354,9 +362,25 @@ func (m *UserMessage) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Payload = append(m.Payload, make([]byte, postIndex-index))
-			copy(m.Payload[len(m.Payload)-1], data[index:postIndex])
+			m.Payload = append(m.Payload, data[index:postIndex]...)
 			index = postIndex
+		case 3:
+			if wireType != 0 {
+				return code_google_com_p_gogoprotobuf_proto.ErrWrongType
+			}
+			var v int64
+			for shift := uint(0); ; shift += 7 {
+				if index >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[index]
+				index++
+				v |= (int64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.Ts = &v
 		default:
 			var sizeOfWire int
 			for {
@@ -1029,7 +1053,8 @@ func (this *UserMessage) String() string {
 	}
 	s := strings.Join([]string{`&UserMessage{`,
 		`Id:` + valueToStringMessage(this.Id) + `,`,
-		`Payload:` + fmt.Sprintf("%v", this.Payload) + `,`,
+		`Payload:` + valueToStringMessage(this.Payload) + `,`,
+		`Ts:` + valueToStringMessage(this.Ts) + `,`,
 		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
@@ -1136,11 +1161,12 @@ func (m *UserMessage) Size() (n int) {
 		l = len(*m.Id)
 		n += 1 + l + sovMessage(uint64(l))
 	}
-	if len(m.Payload) > 0 {
-		for _, b := range m.Payload {
-			l = len(b)
-			n += 1 + l + sovMessage(uint64(l))
-		}
+	if m.Payload != nil {
+		l = len(m.Payload)
+		n += 1 + l + sovMessage(uint64(l))
+	}
+	if m.Ts != nil {
+		n += 1 + sovMessage(uint64(*m.Ts))
 	}
 	if m.XXX_unrecognized != nil {
 		n += len(m.XXX_unrecognized)
@@ -1288,17 +1314,18 @@ func NewPopulatedUserMessage(r randyMessage, easy bool) *UserMessage {
 	this.Id = &v1
 	if r.Intn(10) != 0 {
 		v2 := r.Intn(100)
-		this.Payload = make([][]byte, v2)
+		this.Payload = make([]byte, v2)
 		for i := 0; i < v2; i++ {
-			v3 := r.Intn(100)
-			this.Payload[i] = make([]byte, v3)
-			for j := 0; j < v3; j++ {
-				this.Payload[i][j] = byte(r.Intn(256))
-			}
+			this.Payload[i] = byte(r.Intn(256))
 		}
 	}
+	v3 := r.Int63()
+	if r.Intn(2) == 0 {
+		v3 *= -1
+	}
+	this.Ts = &v3
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMessage(r, 3)
+		this.XXX_unrecognized = randUnrecognizedMessage(r, 4)
 	}
 	return this
 }
@@ -1492,13 +1519,16 @@ func (m *UserMessage) MarshalTo(data []byte) (n int, err error) {
 		i = encodeVarintMessage(data, i, uint64(len(*m.Id)))
 		i += copy(data[i:], *m.Id)
 	}
-	if len(m.Payload) > 0 {
-		for _, b := range m.Payload {
-			data[i] = 0x12
-			i++
-			i = encodeVarintMessage(data, i, uint64(len(b)))
-			i += copy(data[i:], b)
-		}
+	if m.Payload != nil {
+		data[i] = 0x12
+		i++
+		i = encodeVarintMessage(data, i, uint64(len(m.Payload)))
+		i += copy(data[i:], m.Payload)
+	}
+	if m.Ts != nil {
+		data[i] = 0x18
+		i++
+		i = encodeVarintMessage(data, i, uint64(*m.Ts))
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(data[i:], m.XXX_unrecognized)
@@ -1792,7 +1822,7 @@ func (this *UserMessage) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings1.Join([]string{`&message.UserMessage{` + `Id:` + valueToGoStringMessage(this.Id, "string"), `Payload:` + fmt1.Sprintf("%#v", this.Payload), `XXX_unrecognized:` + fmt1.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings1.Join([]string{`&message.UserMessage{` + `Id:` + valueToGoStringMessage(this.Id, "string"), `Payload:` + valueToGoStringMessage(this.Payload, "byte"), `Ts:` + valueToGoStringMessage(this.Ts, "int64"), `XXX_unrecognized:` + fmt1.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *Join) GoString() string {
@@ -1898,13 +1928,17 @@ func (this *UserMessage) VerboseEqual(that interface{}) error {
 	} else if that1.Id != nil {
 		return fmt2.Errorf("Id this(%v) Not Equal that(%v)", this.Id, that1.Id)
 	}
-	if len(this.Payload) != len(that1.Payload) {
-		return fmt2.Errorf("Payload this(%v) Not Equal that(%v)", len(this.Payload), len(that1.Payload))
+	if !bytes.Equal(this.Payload, that1.Payload) {
+		return fmt2.Errorf("Payload this(%v) Not Equal that(%v)", this.Payload, that1.Payload)
 	}
-	for i := range this.Payload {
-		if !bytes.Equal(this.Payload[i], that1.Payload[i]) {
-			return fmt2.Errorf("Payload this[%v](%v) Not Equal that[%v](%v)", i, this.Payload[i], i, that1.Payload[i])
+	if this.Ts != nil && that1.Ts != nil {
+		if *this.Ts != *that1.Ts {
+			return fmt2.Errorf("Ts this(%v) Not Equal that(%v)", *this.Ts, *that1.Ts)
 		}
+	} else if this.Ts != nil {
+		return fmt2.Errorf("this.Ts == nil && that.Ts != nil")
+	} else if that1.Ts != nil {
+		return fmt2.Errorf("Ts this(%v) Not Equal that(%v)", this.Ts, that1.Ts)
 	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return fmt2.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
@@ -1940,13 +1974,17 @@ func (this *UserMessage) Equal(that interface{}) bool {
 	} else if that1.Id != nil {
 		return false
 	}
-	if len(this.Payload) != len(that1.Payload) {
+	if !bytes.Equal(this.Payload, that1.Payload) {
 		return false
 	}
-	for i := range this.Payload {
-		if !bytes.Equal(this.Payload[i], that1.Payload[i]) {
+	if this.Ts != nil && that1.Ts != nil {
+		if *this.Ts != *that1.Ts {
 			return false
 		}
+	} else if this.Ts != nil {
+		return false
+	} else if that1.Ts != nil {
+		return false
 	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false

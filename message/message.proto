@@ -17,7 +17,8 @@ option (gogoproto.unmarshaler_all) = true;
 // User defined messages.
 message UserMessage {
         required string id     = 1;
-        repeated bytes payload = 2;
+        optional bytes payload = 2;
+        required int64 ts      = 3; // Millisecond.
 }
 
 // The Join request.

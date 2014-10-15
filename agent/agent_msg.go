@@ -108,6 +108,6 @@ func (ag *agent) neighbor(node *node.Node, priority message.Neighbor_Priority) (
 }
 
 // userMessage() sends a user message to the node.
-func (ag *agent) userMessage(node *node.Node, msg *message.UserMessage) error {
+func (ag *agent) userMessage(node *node.Node, msg proto.Message) error {
 	return ag.codec.WriteMsg(msg, node.Conn)
 }
