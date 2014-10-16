@@ -35,8 +35,12 @@ type Config struct {
 	ARWL int
 	// Passive Random Walk Length.
 	PRWL int
+	// Shuffle Random Walk Length.
+	SRWL int
 	// Message life.
 	MLife int
+	// Shuffle Duration in seconds.
+	ShuffleDuration int
 }
 
 func ParseConfig() (*Config, error) {
@@ -56,8 +60,10 @@ func ParseConfig() (*Config, error) {
 
 	flag.IntVar(&cfg.ARWL, "arwl", 5, "The active random walk length")
 	flag.IntVar(&cfg.PRWL, "prwl", 5, "The passive random walk length")
+	flag.IntVar(&cfg.SRWL, "srwl", 5, "The shuffle random walk length")
 
 	flag.IntVar(&cfg.MLife, "msg_life", 500, "The default message life (milliconds)")
+	flag.IntVar(&cfg.ShuffleDuration, "shuffle_duration", 5, "The default shuffle duration (seconds)")
 
 	flag.Parse()
 

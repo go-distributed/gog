@@ -103,6 +103,7 @@ func (ag *agent) serve() {
 			continue
 		}
 		// TODO(Yifan): Set read time ount.
+		go ag.shuffleLoop()
 		go ag.serveConn(conn)
 	}
 }
@@ -141,18 +142,34 @@ func (ag *agent) serveConn(conn *net.TCPConn) {
 	}
 }
 
+func (ag *agent) shuffleLoop() {
+	tick := time.Tick(time.Duration(ag.cfg.ShuffleDuration) * time.Second)
+	for {
+		select {
+		case <-tick:
+			ag.mua.Lock()
+			node := chooseRandomNode(ag.aView, "")
+			ag.mua.Unlock()
+			ag.shuffle(node) // TODO go shuffle, handle error
+		}
+	}
+}
+
 // chooseRandomNode() chooses a random node from the active view
 // or passive view.
-func chooseRandomNode(view map[string]*node.Node) *node.Node {
+func chooseRandomNode(view map[string]*node.Node, excludeId string) *node.Node {
 	index := rand.Intn(len(view))
 	i := 0
 	for _, node := range view {
+		if len(excludeId) > 0 && excludeId == node.Id {
+			continue
+		}
 		if i == index {
 			return node
 		}
 		i++
 	}
-	panic("Must not get here!")
+	return nil
 }
 
 // addNodeActiveView() adds the node to the active view. If
@@ -168,7 +185,7 @@ func (ag *agent) addNodeActiveView(node *node.Node) {
 		return
 	}
 	if len(ag.aView) == ag.cfg.AViewSize {
-		n := chooseRandomNode(ag.aView)
+		n := chooseRandomNode(ag.aView, "")
 		ag.disconnect(n)
 		delete(ag.aView, n.Id)
 		ag.addNodePassiveView(n)
@@ -189,7 +206,7 @@ func (ag *agent) addNodePassiveView(node *node.Node) {
 		return
 	}
 	if len(ag.pView) == ag.cfg.PViewSize {
-		n := chooseRandomNode(ag.pView)
+		n := chooseRandomNode(ag.pView, "")
 		delete(ag.pView, n.Id)
 	}
 	ag.pView[node.Id] = node
@@ -274,7 +291,7 @@ func (ag *agent) handleForwardJoin(msg *message.ForwardJoin) {
 	if ttl == uint32(ag.cfg.PRWL) {
 		ag.addNodePassiveView(newNode)
 	}
-	node := chooseRandomNode(ag.aView)
+	node := chooseRandomNode(ag.aView, msg.GetId())
 	ag.forwardJoin(node, newNode, ttl-1) // TODO(yifan): go ag.forwardJoin()
 	return
 }
@@ -297,7 +314,7 @@ func (ag *agent) handleDisconnect(msg *message.Disconnect) {
 	node.Conn.Close()
 	node.Conn = nil
 	for len(ag.aView) == 0 { // We need at least one active node.
-		n := chooseRandomNode(ag.pView)
+		n := chooseRandomNode(ag.pView, "")
 		ag.neighbor(n, message.Neighbor_High)
 	}
 	ag.pView[id] = node
@@ -307,13 +324,25 @@ func (ag *agent) handleDisconnect(msg *message.Disconnect) {
 // handleShuffle() handles Shuffle message. It will send back a ShuffleReply
 // message and update it's views.
 func (ag *agent) handleShuffle(msg *message.Shuffle) {
-	fmt.Println("Fill me in")
-	return
+	ag.mua.Lock()
+	ag.mup.Lock()
+	defer ag.mua.Unlock()
+	defer ag.mup.Unlock()
+
+	ttl := msg.GetTtl()
+	if ttl > 0 && len(ag.aView) > 1 {
+		node := chooseRandomNode(ag.aView, msg.GetId())
+		msg.Ttl = proto.Uint32(ttl - 1)
+		ag.forwardShuffle(node, msg) // TODO check error.
+		return
+	}
+	fmt.Println("Shuffle")
+	//ag.shuffleReply(msg) // TODO check error.
 }
 
 // handleShuffleReply() handles ShuffleReply message. It will update it's views.
 func (ag *agent) handleShuffleReply(msg *message.ShuffleReply) {
-	fmt.Println("Fill me in")
+	fmt.Println("Received shuffle reply")
 	return
 }
 

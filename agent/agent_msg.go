@@ -111,3 +111,23 @@ func (ag *agent) neighbor(node *node.Node, priority message.Neighbor_Priority) (
 func (ag *agent) userMessage(node *node.Node, msg proto.Message) error {
 	return ag.codec.WriteMsg(msg, node.Conn)
 }
+
+func (ag *agent) forwardShuffle(node *node.Node, msg *message.Shuffle) error {
+	msg.Id = proto.String(ag.id)
+	return ag.codec.WriteMsg(msg, node.Conn)
+}
+
+func (ag *agent) shuffleReply(msg *message.Shuffle) error {
+	return errors.New("implement this")
+}
+
+func (ag *agent) shuffle(node *node.Node) error {
+	msg := &message.Shuffle{
+		Id:         proto.String(ag.id),
+		SourceId:   proto.String(ag.id),
+		Addr:       proto.String(ag.cfg.AddrStr),
+		Candidates: nil,
+		Ttl:        proto.Uint32(uint32(ag.cfg.SRWL)),
+	}
+	return ag.codec.WriteMsg(msg, node.Conn)
+}
