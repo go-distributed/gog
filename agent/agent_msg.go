@@ -118,7 +118,20 @@ func (ag *agent) forwardShuffle(node *node.Node, msg *message.Shuffle) error {
 }
 
 func (ag *agent) shuffleReply(msg *message.Shuffle) error {
-	return errors.New("implement this")
+	addr, err := net.ResolveTCPAddr(ag.cfg.Net, msg.GetAddr())
+	if err != nil {
+		// TODO(yifan) log
+		return err
+	}
+	conn, err := net.DialTCP(ag.cfg.Net, nil, addr)
+	if err != nil {
+		return err
+	}
+	reply := &message.ShuffleReply{
+		Id: proto.String(ag.id),
+		Candidates: nil, // TODO(yifan): candidates.
+	}
+	return ag.codec.WriteMsg(reply, conn)
 }
 
 func (ag *agent) shuffle(node *node.Node) error {
@@ -126,7 +139,7 @@ func (ag *agent) shuffle(node *node.Node) error {
 		Id:         proto.String(ag.id),
 		SourceId:   proto.String(ag.id),
 		Addr:       proto.String(ag.cfg.AddrStr),
-		Candidates: nil,
+		Candidates: nil, // TODO(yifan): candidates.
 		Ttl:        proto.Uint32(uint32(ag.cfg.SRWL)),
 	}
 	return ag.codec.WriteMsg(msg, node.Conn)

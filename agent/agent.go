@@ -336,12 +336,31 @@ func (ag *agent) handleShuffle(msg *message.Shuffle) {
 		ag.forwardShuffle(node, msg) // TODO check error.
 		return
 	}
-	fmt.Println("Shuffle")
-	//ag.shuffleReply(msg) // TODO check error.
+	ag.shuffleReply(msg) // TODO check error.
+	candidates := msg.GetCandidates()
+	for i, id := range candidates {
+		fmt.Println(i, id)
+		// if id is not in passive view
+		// add id
+		// if passive view is full, delete some
+	}
+	return
 }
 
 // handleShuffleReply() handles ShuffleReply message. It will update it's views.
 func (ag *agent) handleShuffleReply(msg *message.ShuffleReply) {
+	ag.mua.Lock()
+	ag.mup.Lock()
+	defer ag.mua.Unlock()
+	defer ag.mup.Unlock()
+
+	candidates := msg.GetCandidates()
+	for i, id := range candidates {
+		fmt.Println(i, id)
+		// if id is not in passive view
+		// add id
+		// if passive view is full, delete some	
+	}
 	fmt.Println("Received shuffle reply")
 	return
 }
