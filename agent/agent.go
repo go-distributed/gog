@@ -85,8 +85,8 @@ func (ag *agent) Serve() error {
 		log.Errorf("Serve() Cannot listen %v\n", err)
 		return err
 	}
+	go ag.shuffleLoop()
 	ag.ln = ln
-	// TODO(yifan): Added a tick to trigger shuffle periodically.
 	ag.serve()
 	return nil
 }
@@ -100,7 +100,6 @@ func (ag *agent) serve() {
 			continue
 		}
 		// TODO(Yifan): Set read time ount.
-		go ag.shuffleLoop()
 		go ag.serveConn(conn)
 	}
 }
@@ -128,6 +127,8 @@ func (ag *agent) serveConn(conn *net.TCPConn) {
 			ag.handleDisconnect(msg.(*message.Disconnect))
 		case *message.Shuffle:
 			ag.handleShuffle(msg.(*message.Shuffle))
+		case *message.ShuffleReply:
+			ag.handleShuffleReply(msg.(*message.ShuffleReply))
 		case *message.UserMessage:
 			ag.handleUserMessage(msg.(*message.UserMessage))
 		default:
@@ -146,6 +147,11 @@ func (ag *agent) shuffleLoop() {
 		case <-tick:
 			ag.aView.RLock()
 			ag.pView.RLock()
+			if ag.aView.Len() == 0 {
+				ag.aView.RUnlock()
+				ag.pView.RUnlock()
+				continue
+			}
 			node := chooseRandomNode(ag.aView, "")
 			list := ag.makeShuffleList()
 			ag.aView.RUnlock()
@@ -167,35 +173,6 @@ func (ag *agent) makeShuffleList() []*message.Candidate {
 	return candidates
 }
 
-// chooseRandomNode() chooses a random node from the active view
-// or passive view.
-func chooseRandomNode(view *arraymap.ArrayMap, excludeId string) *node.Node {
-	index := rand.Intn(view.Len())
-	nd := view.GetValueAt(index).(*node.Node)
-	if nd.Id == excludeId {
-		nd = view.GetValueAt((index + 1) % view.Len()).(*node.Node)
-	}
-	return nd
-}
-
-// chooseRandomCandidates() selects n random nodes from the active view
-// or passive view. If n > the size of the view, then all nodes are returned.
-func chooseRandomCandidates(view *arraymap.ArrayMap, n int) []*message.Candidate {
-	if n >= view.Len() {
-		n = view.Len()
-	}
-	candidates := make([]*message.Candidate, n)
-	index := rand.Intn(view.Len())
-	for i := 0; i < n; i++ {
-		nd := view.GetValueAt((index + i) % view.Len()).(*node.Node)
-		candidates[i] = &message.Candidate{
-			Id:   proto.String(nd.Id),
-			Addr: proto.String(nd.Addr),
-		}
-	}
-	return candidates
-}
-
 // addNodeActiveView() adds the node to the active view. If
 // the active view is full, it will move one node from the active
 // view to the passive view before adding the node.
@@ -213,8 +190,9 @@ func (ag *agent) addNodeActiveView(node *node.Node) {
 		ag.disconnect(n) // TODO go disconnect
 		ag.aView.Remove(n.Id)
 		ag.addNodePassiveView(n)
+		return
 	}
-	ag.pView.Append(node.Id, node)
+	ag.aView.Append(node.Id, node)
 }
 
 // addNodePassiveView() adds a node to the passive view. If
@@ -499,9 +477,46 @@ func (ag *agent) List() {
 	for _, v := range ag.pView.Values() {
 		fmt.Println(v.(*node.Node))
 	}
-
 }
 
+// Helpers
+
+// hashMessage() returns the hash of a user message.
 func hashMessage(msg []byte) [sha1.Size]byte {
 	return sha1.Sum(msg)
+}
+
+// chooseRandomNode() chooses a random node from the active view
+// or passive view.
+func chooseRandomNode(view *arraymap.ArrayMap, excludeId string) *node.Node {
+	if view.Len() == 0 {
+		return nil
+	}
+	index := rand.Intn(view.Len())
+	nd := view.GetValueAt(index).(*node.Node)
+	if nd.Id == excludeId {
+		nd = view.GetValueAt((index + 1) % view.Len()).(*node.Node)
+	}
+	return nd
+}
+
+// chooseRandomCandidates() selects n random nodes from the active view
+// or passive view. If n > the size of the view, then all nodes are returned.
+func chooseRandomCandidates(view *arraymap.ArrayMap, n int) []*message.Candidate {
+	if view.Len() == 0 {
+		return nil
+	}
+	if n >= view.Len() {
+		n = view.Len()
+	}
+	candidates := make([]*message.Candidate, n)
+	index := rand.Intn(view.Len())
+	for i := 0; i < n; i++ {
+		nd := view.GetValueAt((index + i) % view.Len()).(*node.Node)
+		candidates[i] = &message.Candidate{
+			Id:   proto.String(nd.Id),
+			Addr: proto.String(nd.Addr),
+		}
+	}
+	return candidates
 }

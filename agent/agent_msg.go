@@ -118,6 +118,7 @@ func (ag *agent) forwardShuffle(node *node.Node, msg *message.Shuffle) error {
 }
 
 func (ag *agent) shuffleReply(msg *message.Shuffle, candidates []*message.Candidate) error {
+	// TODO use existing tcp.
 	addr, err := net.ResolveTCPAddr(ag.cfg.Net, msg.GetAddr())
 	if err != nil {
 		// TODO(yifan) log
@@ -131,7 +132,11 @@ func (ag *agent) shuffleReply(msg *message.Shuffle, candidates []*message.Candid
 		Id:         proto.String(ag.id),
 		Candidates: candidates,
 	}
-	return ag.codec.WriteMsg(reply, conn)
+	if err := ag.codec.WriteMsg(reply, conn); err != nil {
+		// TODO log
+	}
+	conn.Close()
+	return nil
 }
 
 func (ag *agent) shuffle(node *node.Node, candidates []*message.Candidate) error {
