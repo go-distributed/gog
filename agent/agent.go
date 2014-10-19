@@ -144,12 +144,27 @@ func (ag *agent) shuffleLoop() {
 	for {
 		select {
 		case <-tick:
-			ag.aView.Lock()
+			ag.aView.RLock()
+			ag.pView.RLock()
 			node := chooseRandomNode(ag.aView, "")
-			ag.aView.Unlock()
-			ag.shuffle(node) // TODO go shuffle, handle error
+			list := ag.makeShuffleList()
+			ag.aView.RUnlock()
+			ag.pView.RUnlock()
+			ag.shuffle(node, list) // TODO go shuffle, handle error
 		}
 	}
+}
+
+func (ag *agent) makeShuffleList() []*message.Candidate {
+	candidates := make([]*message.Candidate, 0, 1+ag.cfg.Ka+ag.cfg.Kp)
+	self := &message.Candidate{
+		Id:   proto.String(ag.id),
+		Addr: proto.String(ag.cfg.AddrStr),
+	}
+	candidates = append(candidates, self)
+	candidates = append(candidates, chooseRandomCandidates(ag.aView, ag.cfg.Ka)...)
+	candidates = append(candidates, chooseRandomCandidates(ag.pView, ag.cfg.Kp)...)
+	return candidates
 }
 
 // chooseRandomNode() chooses a random node from the active view
@@ -161,6 +176,24 @@ func chooseRandomNode(view *arraymap.ArrayMap, excludeId string) *node.Node {
 		nd = view.GetValueAt((index + 1) % view.Len()).(*node.Node)
 	}
 	return nd
+}
+
+// chooseRandomCandidates() selects n random nodes from the active view
+// or passive view. If n > the size of the view, then all nodes are returned.
+func chooseRandomCandidates(view *arraymap.ArrayMap, n int) []*message.Candidate {
+	if n >= view.Len() {
+		n = view.Len()
+	}
+	candidates := make([]*message.Candidate, n)
+	index := rand.Intn(view.Len())
+	for i := 0; i < n; i++ {
+		nd := view.GetValueAt((index + i) % view.Len()).(*node.Node)
+		candidates[i] = &message.Candidate{
+			Id:   proto.String(nd.Id),
+			Addr: proto.String(nd.Addr),
+		}
+	}
+	return candidates
 }
 
 // addNodeActiveView() adds the node to the active view. If
@@ -330,13 +363,15 @@ func (ag *agent) handleShuffle(msg *message.Shuffle) {
 		ag.forwardShuffle(node, msg) // TODO check error, go routine
 		return
 	}
-	ag.shuffleReply(msg) // TODO check error, go routine
 	candidates := msg.GetCandidates()
-	for i, id := range candidates {
-		fmt.Println(i, id)
-		// if id is not in passive view
-		// add id
-		// if passive view is full, delete some
+	replyCandidates := chooseRandomCandidates(ag.pView, len(candidates))
+	ag.shuffleReply(msg, replyCandidates) // TODO check error, go routine
+	for _, candidate := range candidates {
+		node := &node.Node{
+			Id:   candidate.GetId(),
+			Addr: candidate.GetAddr(),
+		}
+		ag.addNodePassiveView(node)
 	}
 	return
 }
@@ -349,13 +384,13 @@ func (ag *agent) handleShuffleReply(msg *message.ShuffleReply) {
 	defer ag.pView.Unlock()
 
 	candidates := msg.GetCandidates()
-	for i, id := range candidates {
-		fmt.Println(i, id)
-		// if id is not in passive view
-		// add id
-		// if passive view is full, delete some
+	for _, candidate := range candidates {
+		node := &node.Node{
+			Id:   candidate.GetId(),
+			Addr: candidate.GetAddr(),
+		}
+		ag.addNodePassiveView(node)
 	}
-	fmt.Println("Received shuffle reply")
 	return
 }
 

@@ -59,17 +59,23 @@ message Disconnect {
         required string id = 1;
 }
 
+// The Candidate.
+message Candidate {
+        required string id   = 1;
+        required string addr = 2;
+}
+
 // The Shuffle request.
 message Shuffle {
-        required string id         = 1;
-        required string sourceId   = 2;
-        required string addr       = 3;
-        repeated string candidates = 4;
-        required uint32 ttl        = 5;
+        required string id            = 1;
+        required string sourceId      = 2;
+        required string addr          = 3;
+        repeated Candidate candidates = 4;
+        required uint32 ttl           = 5;
 }
 
 // The ShuffleReply.
 message ShuffleReply {
-        required string id         = 1;
-        repeated string candidates = 2;
+        required string id            = 1;
+        repeated Candidate candidates = 2;
 }

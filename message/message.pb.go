@@ -15,6 +15,7 @@
 		NeighborReply
 		ForwardJoin
 		Disconnect
+		Candidate
 		Shuffle
 		ShuffleReply
 */
@@ -249,14 +250,38 @@ func (m *Disconnect) GetId() string {
 	return ""
 }
 
+// The Candidate.
+type Candidate struct {
+	Id               *string `protobuf:"bytes,1,req,name=id" json:"id,omitempty"`
+	Addr             *string `protobuf:"bytes,2,req,name=addr" json:"addr,omitempty"`
+	XXX_unrecognized []byte  `json:"-"`
+}
+
+func (m *Candidate) Reset()      { *m = Candidate{} }
+func (*Candidate) ProtoMessage() {}
+
+func (m *Candidate) GetId() string {
+	if m != nil && m.Id != nil {
+		return *m.Id
+	}
+	return ""
+}
+
+func (m *Candidate) GetAddr() string {
+	if m != nil && m.Addr != nil {
+		return *m.Addr
+	}
+	return ""
+}
+
 // The Shuffle request.
 type Shuffle struct {
-	Id               *string  `protobuf:"bytes,1,req,name=id" json:"id,omitempty"`
-	SourceId         *string  `protobuf:"bytes,2,req,name=sourceId" json:"sourceId,omitempty"`
-	Addr             *string  `protobuf:"bytes,3,req,name=addr" json:"addr,omitempty"`
-	Candidates       []string `protobuf:"bytes,4,rep,name=candidates" json:"candidates,omitempty"`
-	Ttl              *uint32  `protobuf:"varint,5,req,name=ttl" json:"ttl,omitempty"`
-	XXX_unrecognized []byte   `json:"-"`
+	Id               *string      `protobuf:"bytes,1,req,name=id" json:"id,omitempty"`
+	SourceId         *string      `protobuf:"bytes,2,req,name=sourceId" json:"sourceId,omitempty"`
+	Addr             *string      `protobuf:"bytes,3,req,name=addr" json:"addr,omitempty"`
+	Candidates       []*Candidate `protobuf:"bytes,4,rep,name=candidates" json:"candidates,omitempty"`
+	Ttl              *uint32      `protobuf:"varint,5,req,name=ttl" json:"ttl,omitempty"`
+	XXX_unrecognized []byte       `json:"-"`
 }
 
 func (m *Shuffle) Reset()      { *m = Shuffle{} }
@@ -283,7 +308,7 @@ func (m *Shuffle) GetAddr() string {
 	return ""
 }
 
-func (m *Shuffle) GetCandidates() []string {
+func (m *Shuffle) GetCandidates() []*Candidate {
 	if m != nil {
 		return m.Candidates
 	}
@@ -299,9 +324,9 @@ func (m *Shuffle) GetTtl() uint32 {
 
 // The ShuffleReply.
 type ShuffleReply struct {
-	Id               *string  `protobuf:"bytes,1,req,name=id" json:"id,omitempty"`
-	Candidates       []string `protobuf:"bytes,2,rep,name=candidates" json:"candidates,omitempty"`
-	XXX_unrecognized []byte   `json:"-"`
+	Id               *string      `protobuf:"bytes,1,req,name=id" json:"id,omitempty"`
+	Candidates       []*Candidate `protobuf:"bytes,2,rep,name=candidates" json:"candidates,omitempty"`
+	XXX_unrecognized []byte       `json:"-"`
 }
 
 func (m *ShuffleReply) Reset()      { *m = ShuffleReply{} }
@@ -314,7 +339,7 @@ func (m *ShuffleReply) GetId() string {
 	return ""
 }
 
-func (m *ShuffleReply) GetCandidates() []string {
+func (m *ShuffleReply) GetCandidates() []*Candidate {
 	if m != nil {
 		return m.Candidates
 	}
@@ -897,6 +922,94 @@ func (m *Disconnect) Unmarshal(data []byte) error {
 	}
 	return nil
 }
+func (m *Candidate) Unmarshal(data []byte) error {
+	l := len(data)
+	index := 0
+	for index < l {
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if index >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := data[index]
+			index++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return code_google_com_p_gogoprotobuf_proto.ErrWrongType
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if index >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[index]
+				index++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			postIndex := index + int(stringLen)
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			s := string(data[index:postIndex])
+			m.Id = &s
+			index = postIndex
+		case 2:
+			if wireType != 2 {
+				return code_google_com_p_gogoprotobuf_proto.ErrWrongType
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if index >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[index]
+				index++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			postIndex := index + int(stringLen)
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			s := string(data[index:postIndex])
+			m.Addr = &s
+			index = postIndex
+		default:
+			var sizeOfWire int
+			for {
+				sizeOfWire++
+				wire >>= 7
+				if wire == 0 {
+					break
+				}
+			}
+			index -= sizeOfWire
+			skippy, err := code_google_com_p_gogoprotobuf_proto.Skip(data[index:])
+			if err != nil {
+				return err
+			}
+			if (index + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, data[index:index+skippy]...)
+			index += skippy
+		}
+	}
+	return nil
+}
 func (m *Shuffle) Unmarshal(data []byte) error {
 	l := len(data)
 	index := 0
@@ -989,23 +1102,24 @@ func (m *Shuffle) Unmarshal(data []byte) error {
 			if wireType != 2 {
 				return code_google_com_p_gogoprotobuf_proto.ErrWrongType
 			}
-			var stringLen uint64
+			var msglen int
 			for shift := uint(0); ; shift += 7 {
 				if index >= l {
 					return io.ErrUnexpectedEOF
 				}
 				b := data[index]
 				index++
-				stringLen |= (uint64(b) & 0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			postIndex := index + int(stringLen)
+			postIndex := index + msglen
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Candidates = append(m.Candidates, string(data[index:postIndex]))
+			m.Candidates = append(m.Candidates, &Candidate{})
+			m.Candidates[len(m.Candidates)-1].Unmarshal(data[index:postIndex])
 			index = postIndex
 		case 5:
 			if wireType != 0 {
@@ -1093,23 +1207,24 @@ func (m *ShuffleReply) Unmarshal(data []byte) error {
 			if wireType != 2 {
 				return code_google_com_p_gogoprotobuf_proto.ErrWrongType
 			}
-			var stringLen uint64
+			var msglen int
 			for shift := uint(0); ; shift += 7 {
 				if index >= l {
 					return io.ErrUnexpectedEOF
 				}
 				b := data[index]
 				index++
-				stringLen |= (uint64(b) & 0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			postIndex := index + int(stringLen)
+			postIndex := index + msglen
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Candidates = append(m.Candidates, string(data[index:postIndex]))
+			m.Candidates = append(m.Candidates, &Candidate{})
+			m.Candidates[len(m.Candidates)-1].Unmarshal(data[index:postIndex])
 			index = postIndex
 		default:
 			var sizeOfWire int
@@ -1209,6 +1324,18 @@ func (this *Disconnect) String() string {
 	}, "")
 	return s
 }
+func (this *Candidate) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&Candidate{`,
+		`Id:` + valueToStringMessage(this.Id) + `,`,
+		`Addr:` + valueToStringMessage(this.Addr) + `,`,
+		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`}`,
+	}, "")
+	return s
+}
 func (this *Shuffle) String() string {
 	if this == nil {
 		return "nil"
@@ -1217,7 +1344,7 @@ func (this *Shuffle) String() string {
 		`Id:` + valueToStringMessage(this.Id) + `,`,
 		`SourceId:` + valueToStringMessage(this.SourceId) + `,`,
 		`Addr:` + valueToStringMessage(this.Addr) + `,`,
-		`Candidates:` + fmt.Sprintf("%v", this.Candidates) + `,`,
+		`Candidates:` + strings.Replace(fmt.Sprintf("%v", this.Candidates), "Candidate", "Candidate", 1) + `,`,
 		`Ttl:` + valueToStringMessage(this.Ttl) + `,`,
 		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
@@ -1230,7 +1357,7 @@ func (this *ShuffleReply) String() string {
 	}
 	s := strings.Join([]string{`&ShuffleReply{`,
 		`Id:` + valueToStringMessage(this.Id) + `,`,
-		`Candidates:` + fmt.Sprintf("%v", this.Candidates) + `,`,
+		`Candidates:` + strings.Replace(fmt.Sprintf("%v", this.Candidates), "Candidate", "Candidate", 1) + `,`,
 		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
@@ -1348,6 +1475,22 @@ func (m *Disconnect) Size() (n int) {
 	}
 	return n
 }
+func (m *Candidate) Size() (n int) {
+	var l int
+	_ = l
+	if m.Id != nil {
+		l = len(*m.Id)
+		n += 1 + l + sovMessage(uint64(l))
+	}
+	if m.Addr != nil {
+		l = len(*m.Addr)
+		n += 1 + l + sovMessage(uint64(l))
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
 func (m *Shuffle) Size() (n int) {
 	var l int
 	_ = l
@@ -1364,8 +1507,8 @@ func (m *Shuffle) Size() (n int) {
 		n += 1 + l + sovMessage(uint64(l))
 	}
 	if len(m.Candidates) > 0 {
-		for _, s := range m.Candidates {
-			l = len(s)
+		for _, e := range m.Candidates {
+			l = e.Size()
 			n += 1 + l + sovMessage(uint64(l))
 		}
 	}
@@ -1385,8 +1528,8 @@ func (m *ShuffleReply) Size() (n int) {
 		n += 1 + l + sovMessage(uint64(l))
 	}
 	if len(m.Candidates) > 0 {
-		for _, s := range m.Candidates {
-			l = len(s)
+		for _, e := range m.Candidates {
+			l = e.Size()
 			n += 1 + l + sovMessage(uint64(l))
 		}
 	}
@@ -1495,23 +1638,35 @@ func NewPopulatedDisconnect(r randyMessage, easy bool) *Disconnect {
 	return this
 }
 
-func NewPopulatedShuffle(r randyMessage, easy bool) *Shuffle {
-	this := &Shuffle{}
+func NewPopulatedCandidate(r randyMessage, easy bool) *Candidate {
+	this := &Candidate{}
 	v16 := randStringMessage(r)
 	this.Id = &v16
 	v17 := randStringMessage(r)
-	this.SourceId = &v17
+	this.Addr = &v17
+	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedMessage(r, 3)
+	}
+	return this
+}
+
+func NewPopulatedShuffle(r randyMessage, easy bool) *Shuffle {
+	this := &Shuffle{}
 	v18 := randStringMessage(r)
-	this.Addr = &v18
+	this.Id = &v18
+	v19 := randStringMessage(r)
+	this.SourceId = &v19
+	v20 := randStringMessage(r)
+	this.Addr = &v20
 	if r.Intn(10) != 0 {
-		v19 := r.Intn(10)
-		this.Candidates = make([]string, v19)
-		for i := 0; i < v19; i++ {
-			this.Candidates[i] = randStringMessage(r)
+		v21 := r.Intn(10)
+		this.Candidates = make([]*Candidate, v21)
+		for i := 0; i < v21; i++ {
+			this.Candidates[i] = NewPopulatedCandidate(r, easy)
 		}
 	}
-	v20 := r.Uint32()
-	this.Ttl = &v20
+	v22 := r.Uint32()
+	this.Ttl = &v22
 	if !easy && r.Intn(10) != 0 {
 		this.XXX_unrecognized = randUnrecognizedMessage(r, 6)
 	}
@@ -1520,13 +1675,13 @@ func NewPopulatedShuffle(r randyMessage, easy bool) *Shuffle {
 
 func NewPopulatedShuffleReply(r randyMessage, easy bool) *ShuffleReply {
 	this := &ShuffleReply{}
-	v21 := randStringMessage(r)
-	this.Id = &v21
+	v23 := randStringMessage(r)
+	this.Id = &v23
 	if r.Intn(10) != 0 {
-		v22 := r.Intn(10)
-		this.Candidates = make([]string, v22)
-		for i := 0; i < v22; i++ {
-			this.Candidates[i] = randStringMessage(r)
+		v24 := r.Intn(10)
+		this.Candidates = make([]*Candidate, v24)
+		for i := 0; i < v24; i++ {
+			this.Candidates[i] = NewPopulatedCandidate(r, easy)
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -1552,9 +1707,9 @@ func randUTF8RuneMessage(r randyMessage) rune {
 	return res
 }
 func randStringMessage(r randyMessage) string {
-	v23 := r.Intn(100)
-	tmps := make([]rune, v23)
-	for i := 0; i < v23; i++ {
+	v25 := r.Intn(100)
+	tmps := make([]rune, v25)
+	for i := 0; i < v25; i++ {
 		tmps[i] = randUTF8RuneMessage(r)
 	}
 	return string(tmps)
@@ -1576,11 +1731,11 @@ func randFieldMessage(data []byte, r randyMessage, fieldNumber int, wire int) []
 	switch wire {
 	case 0:
 		data = encodeVarintPopulateMessage(data, uint64(key))
-		v24 := r.Int63()
+		v26 := r.Int63()
 		if r.Intn(2) == 0 {
-			v24 *= -1
+			v26 *= -1
 		}
-		data = encodeVarintPopulateMessage(data, uint64(v24))
+		data = encodeVarintPopulateMessage(data, uint64(v26))
 	case 1:
 		data = encodeVarintPopulateMessage(data, uint64(key))
 		data = append(data, byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)))
@@ -1816,6 +1971,38 @@ func (m *Disconnect) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+func (m *Candidate) Marshal() (data []byte, err error) {
+	size := m.Size()
+	data = make([]byte, size)
+	n, err := m.MarshalTo(data)
+	if err != nil {
+		return nil, err
+	}
+	return data[:n], nil
+}
+
+func (m *Candidate) MarshalTo(data []byte) (n int, err error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if m.Id != nil {
+		data[i] = 0xa
+		i++
+		i = encodeVarintMessage(data, i, uint64(len(*m.Id)))
+		i += copy(data[i:], *m.Id)
+	}
+	if m.Addr != nil {
+		data[i] = 0x12
+		i++
+		i = encodeVarintMessage(data, i, uint64(len(*m.Addr)))
+		i += copy(data[i:], *m.Addr)
+	}
+	if m.XXX_unrecognized != nil {
+		i += copy(data[i:], m.XXX_unrecognized)
+	}
+	return i, nil
+}
 func (m *Shuffle) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -1850,18 +2037,15 @@ func (m *Shuffle) MarshalTo(data []byte) (n int, err error) {
 		i += copy(data[i:], *m.Addr)
 	}
 	if len(m.Candidates) > 0 {
-		for _, s := range m.Candidates {
+		for _, msg := range m.Candidates {
 			data[i] = 0x22
 			i++
-			l = len(s)
-			for l >= 1<<7 {
-				data[i] = uint8(uint64(l)&0x7f | 0x80)
-				l >>= 7
-				i++
+			i = encodeVarintMessage(data, i, uint64(msg.Size()))
+			n, err := msg.MarshalTo(data[i:])
+			if err != nil {
+				return 0, err
 			}
-			data[i] = uint8(l)
-			i++
-			i += copy(data[i:], s)
+			i += n
 		}
 	}
 	if m.Ttl != nil {
@@ -1896,18 +2080,15 @@ func (m *ShuffleReply) MarshalTo(data []byte) (n int, err error) {
 		i += copy(data[i:], *m.Id)
 	}
 	if len(m.Candidates) > 0 {
-		for _, s := range m.Candidates {
+		for _, msg := range m.Candidates {
 			data[i] = 0x12
 			i++
-			l = len(s)
-			for l >= 1<<7 {
-				data[i] = uint8(uint64(l)&0x7f | 0x80)
-				l >>= 7
-				i++
+			i = encodeVarintMessage(data, i, uint64(msg.Size()))
+			n, err := msg.MarshalTo(data[i:])
+			if err != nil {
+				return 0, err
 			}
-			data[i] = uint8(l)
-			i++
-			i += copy(data[i:], s)
+			i += n
 		}
 	}
 	if m.XXX_unrecognized != nil {
@@ -1982,6 +2163,13 @@ func (this *Disconnect) GoString() string {
 		return "nil"
 	}
 	s := strings1.Join([]string{`&message.Disconnect{` + `Id:` + valueToGoStringMessage(this.Id, "string"), `XXX_unrecognized:` + fmt1.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	return s
+}
+func (this *Candidate) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings1.Join([]string{`&message.Candidate{` + `Id:` + valueToGoStringMessage(this.Id, "string"), `Addr:` + valueToGoStringMessage(this.Addr, "string"), `XXX_unrecognized:` + fmt1.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *Shuffle) GoString() string {
@@ -2581,6 +2769,92 @@ func (this *Disconnect) Equal(that interface{}) bool {
 	}
 	return true
 }
+func (this *Candidate) VerboseEqual(that interface{}) error {
+	if that == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt2.Errorf("that == nil && this != nil")
+	}
+
+	that1, ok := that.(*Candidate)
+	if !ok {
+		return fmt2.Errorf("that is not of type *Candidate")
+	}
+	if that1 == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt2.Errorf("that is type *Candidate but is nil && this != nil")
+	} else if this == nil {
+		return fmt2.Errorf("that is type *Candidatebut is not nil && this == nil")
+	}
+	if this.Id != nil && that1.Id != nil {
+		if *this.Id != *that1.Id {
+			return fmt2.Errorf("Id this(%v) Not Equal that(%v)", *this.Id, *that1.Id)
+		}
+	} else if this.Id != nil {
+		return fmt2.Errorf("this.Id == nil && that.Id != nil")
+	} else if that1.Id != nil {
+		return fmt2.Errorf("Id this(%v) Not Equal that(%v)", this.Id, that1.Id)
+	}
+	if this.Addr != nil && that1.Addr != nil {
+		if *this.Addr != *that1.Addr {
+			return fmt2.Errorf("Addr this(%v) Not Equal that(%v)", *this.Addr, *that1.Addr)
+		}
+	} else if this.Addr != nil {
+		return fmt2.Errorf("this.Addr == nil && that.Addr != nil")
+	} else if that1.Addr != nil {
+		return fmt2.Errorf("Addr this(%v) Not Equal that(%v)", this.Addr, that1.Addr)
+	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
+		return fmt2.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+	}
+	return nil
+}
+func (this *Candidate) Equal(that interface{}) bool {
+	if that == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	}
+
+	that1, ok := that.(*Candidate)
+	if !ok {
+		return false
+	}
+	if that1 == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	} else if this == nil {
+		return false
+	}
+	if this.Id != nil && that1.Id != nil {
+		if *this.Id != *that1.Id {
+			return false
+		}
+	} else if this.Id != nil {
+		return false
+	} else if that1.Id != nil {
+		return false
+	}
+	if this.Addr != nil && that1.Addr != nil {
+		if *this.Addr != *that1.Addr {
+			return false
+		}
+	} else if this.Addr != nil {
+		return false
+	} else if that1.Addr != nil {
+		return false
+	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
+		return false
+	}
+	return true
+}
 func (this *Shuffle) VerboseEqual(that interface{}) error {
 	if that == nil {
 		if this == nil {
@@ -2632,7 +2906,7 @@ func (this *Shuffle) VerboseEqual(that interface{}) error {
 		return fmt2.Errorf("Candidates this(%v) Not Equal that(%v)", len(this.Candidates), len(that1.Candidates))
 	}
 	for i := range this.Candidates {
-		if this.Candidates[i] != that1.Candidates[i] {
+		if !this.Candidates[i].Equal(that1.Candidates[i]) {
 			return fmt2.Errorf("Candidates this[%v](%v) Not Equal that[%v](%v)", i, this.Candidates[i], i, that1.Candidates[i])
 		}
 	}
@@ -2701,7 +2975,7 @@ func (this *Shuffle) Equal(that interface{}) bool {
 		return false
 	}
 	for i := range this.Candidates {
-		if this.Candidates[i] != that1.Candidates[i] {
+		if !this.Candidates[i].Equal(that1.Candidates[i]) {
 			return false
 		}
 	}
@@ -2752,7 +3026,7 @@ func (this *ShuffleReply) VerboseEqual(that interface{}) error {
 		return fmt2.Errorf("Candidates this(%v) Not Equal that(%v)", len(this.Candidates), len(that1.Candidates))
 	}
 	for i := range this.Candidates {
-		if this.Candidates[i] != that1.Candidates[i] {
+		if !this.Candidates[i].Equal(that1.Candidates[i]) {
 			return fmt2.Errorf("Candidates this[%v](%v) Not Equal that[%v](%v)", i, this.Candidates[i], i, that1.Candidates[i])
 		}
 	}
@@ -2794,7 +3068,7 @@ func (this *ShuffleReply) Equal(that interface{}) bool {
 		return false
 	}
 	for i := range this.Candidates {
-		if this.Candidates[i] != that1.Candidates[i] {
+		if !this.Candidates[i].Equal(that1.Candidates[i]) {
 			return false
 		}
 	}
