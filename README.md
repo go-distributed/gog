@@ -24,5 +24,5 @@ $ ./gog -addr="localhost:8424"
 To join an existing cluster:
 
 ```shell
-$ ./gog -addr="localhost:8425" -join_node="localhost:8424"
+$ ./gog -addr="localhost:8425" -peer_node="localhost:8424"
 ```
