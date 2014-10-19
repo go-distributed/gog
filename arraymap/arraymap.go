@@ -4,11 +4,13 @@ import (
 	"sync"
 )
 
+// TODO make it an interface.
+
 type ArrayMap struct {
 	positions map[interface{}]int
 	keys      []interface{}
 	values    []interface{}
-	RWL       sync.RWMutex
+	rwl       sync.RWMutex
 }
 
 func NewArrayMap() *ArrayMap {
@@ -20,14 +22,10 @@ func NewArrayMap() *ArrayMap {
 }
 
 func (a *ArrayMap) Len() int {
-	a.RWL.RLock()
-	defer a.RWL.RUnlock()
 	return len(a.keys)
 }
 
 func (a *ArrayMap) Append(key, value interface{}) {
-	a.RWL.Lock()
-	defer a.RWL.Unlock()
 	if _, existed := a.positions[key]; existed {
 		return
 	}
@@ -37,34 +35,23 @@ func (a *ArrayMap) Append(key, value interface{}) {
 }
 
 func (a *ArrayMap) GetKeyAt(i int) interface{} {
-	a.RWL.RLock()
-	defer a.RWL.RUnlock()
 	return a.keys[i]
 }
 
 func (a *ArrayMap) GetValueAt(i int) interface{} {
-	a.RWL.RLock()
-	defer a.RWL.RUnlock()
 	return a.values[i]
 }
 
 func (a *ArrayMap) GetValueOf(key interface{}) interface{} {
-	a.RWL.RLock()
-	defer a.RWL.RUnlock()
 	return a.values[a.positions[key]]
 }
 
 func (a *ArrayMap) Has(key interface{}) bool {
-	a.RWL.RLock()
-	defer a.RWL.RUnlock()
 	_, existed := a.positions[key]
 	return existed
 }
 
 func (a *ArrayMap) RemoveAt(i int) {
-	a.RWL.Lock()
-	defer a.RWL.Unlock()
-
 	removingKey, lastKey := a.keys[i], a.keys[len(a.keys)-1]
 	// Swap the removing item and the last.
 	a.keys[i], a.keys[len(a.keys)-1] = a.keys[len(a.keys)-1], a.keys[i]
@@ -83,4 +70,28 @@ func (a *ArrayMap) Remove(key interface{}) {
 	if _, exisited := a.positions[key]; exisited {
 		a.RemoveAt(a.positions[key])
 	}
+}
+
+func (a *ArrayMap) Lock() {
+	a.rwl.Lock()
+	return 
+}
+
+func (a *ArrayMap) Unlock() {
+	a.rwl.Unlock()
+	return 
+}
+
+func (a *ArrayMap) RLock() {
+	a.rwl.RLock()
+	return 
+}
+
+func (a *ArrayMap) RUnlock() {
+	a.rwl.RUnlock()
+	return 
+}
+
+func (a *ArrayMap) Values() []interface{} {
+	return a.values
 }
