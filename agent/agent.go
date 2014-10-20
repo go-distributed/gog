@@ -153,10 +153,13 @@ func (ag *agent) shuffleLoop() {
 				continue
 			}
 			node := chooseRandomNode(ag.aView, "")
+			if node == nil {
+				continue
+			}
 			list := ag.makeShuffleList()
 			ag.aView.RUnlock()
 			ag.pView.RUnlock()
-			ag.shuffle(node, list) // TODO go shuffle, handle error
+			ag.shuffle(node, list)
 		}
 	}
 }
@@ -212,6 +215,36 @@ func (ag *agent) addNodePassiveView(node *node.Node) {
 		ag.aView.Remove(n.Id)
 	}
 	ag.pView.Append(node.Id, node)
+}
+
+// replaceActiveNode() replaces a "dead" node in the active
+// view with a node randomly chosen from the passive view.
+func (ag *agent) replaceActiveNode(node *node.Node) {
+	ag.aView.Lock()
+	ag.pView.Lock()
+	defer ag.aView.Lock()
+	defer ag.pView.Unlock()
+
+	// TODO add the node to passive view instead of removing.
+	node.Conn.Close()
+	ag.aView.Remove(node.Id)
+
+	// Note that this Will panic automatically if the passive view is empty.
+	nd := chooseRandomNode(ag.pView, "")
+	if nd == nil {
+		panic("No nodes in passive view")
+	}
+	ag.pView.Remove(nd.Id)
+	ag.neighbor(nd, message.Neighbor_Low)
+	// We need at least one active node.
+	for ag.aView.Len() == 0 {
+		nd = chooseRandomNode(ag.pView, "")
+		if nd == nil {
+			panic("No nodes in passive view")
+		}
+		ag.pView.Remove(nd.Id)
+		ag.neighbor(nd, message.Neighbor_High)
+	}
 }
 
 // handleJoin() handles Join message. If it accepts the request, it will add
@@ -317,10 +350,11 @@ func (ag *agent) handleDisconnect(msg *message.Disconnect) {
 	ag.aView.Remove(id)
 	nd.Conn.Close()
 	nd.Conn = nil
-	for ag.aView.Len() == 0 { // We need at least one active node.
+	// We need at least one active node.
+	for ag.aView.Len() == 0 {
 		// TODO release the lock when calling neighbor.
-		n := chooseRandomNode(ag.pView, "")
-		ag.neighbor(n, message.Neighbor_High)
+		nd = chooseRandomNode(ag.pView, "")
+		ag.neighbor(nd, message.Neighbor_High)
 	}
 	ag.pView.Append(nd.Id, nd)
 	return
@@ -450,9 +484,7 @@ func (ag *agent) Broadcast(payload []byte) error {
 	defer ag.aView.Unlock()
 	for _, v := range ag.aView.Values() {
 		nd := v.(*node.Node)
-		if err := ag.userMessage(nd, msg); err != nil {
-			// TODO: update view.
-		}
+		ag.userMessage(nd, msg)
 	}
 	return nil
 }
@@ -495,6 +527,9 @@ func chooseRandomNode(view *arraymap.ArrayMap, excludeId string) *node.Node {
 	index := rand.Intn(view.Len())
 	nd := view.GetValueAt(index).(*node.Node)
 	if nd.Id == excludeId {
+		if view.Len() == 1 {
+			return nil
+		}
 		nd = view.GetValueAt((index + 1) % view.Len()).(*node.Node)
 	}
 	return nd
