@@ -159,7 +159,7 @@ func (ag *agent) shuffleLoop() {
 			list := ag.makeShuffleList()
 			ag.aView.RUnlock()
 			ag.pView.RUnlock()
-			ag.shuffle(node, list)
+			go ag.shuffle(node, list)
 		}
 	}
 }
@@ -190,7 +190,7 @@ func (ag *agent) addNodeActiveView(node *node.Node) {
 	}
 	if ag.aView.Len() == ag.cfg.AViewSize {
 		n := chooseRandomNode(ag.aView, "")
-		ag.disconnect(n) // TODO go disconnect
+		go ag.disconnect(n)
 		ag.aView.Remove(n.Id)
 		ag.addNodePassiveView(n)
 		return
@@ -222,7 +222,7 @@ func (ag *agent) addNodePassiveView(node *node.Node) {
 func (ag *agent) replaceActiveNode(node *node.Node) {
 	ag.aView.Lock()
 	ag.pView.Lock()
-	defer ag.aView.Lock()
+	defer ag.aView.Unlock()
 	defer ag.pView.Unlock()
 
 	// TODO add the node to passive view instead of removing.
@@ -244,7 +244,9 @@ func (ag *agent) replaceActiveNode(node *node.Node) {
 		}
 		ag.pView.Remove(nd.Id)
 		ag.neighbor(nd, message.Neighbor_High)
+		fmt.Println("neighboring")
 	}
+	fmt.Println("neighboring done")
 }
 
 // handleJoin() handles Join message. If it accepts the request, it will add
@@ -271,7 +273,7 @@ func (ag *agent) handleJoin(conn *net.TCPConn, msg *message.Join) {
 		if nd == newNode {
 			continue
 		}
-		ag.forwardJoin(nd, newNode, uint32(rand.Intn(ag.cfg.ARWL))) // TODO(yifan): go ag.forwardJoin()
+		go ag.forwardJoin(nd, newNode, uint32(rand.Intn(ag.cfg.ARWL)))
 	}
 }
 
@@ -293,14 +295,14 @@ func (ag *agent) handleNeighbor(conn *net.TCPConn, msg *message.Neighbor) {
 
 	if ag.aView.Len() == ag.cfg.AViewSize {
 		if msg.GetPriority() == message.Neighbor_Low {
-			ag.rejectNeighbor(newNode) // TODO(yifan): go ag.rejectNeighbor()
+			go ag.rejectNeighbor(newNode)
 			// TODO(yifan): Add the node to passive view.
 			return
 		}
 	}
 	ag.addNodeActiveView(newNode)
 	go ag.serveConn(newNode.Conn)
-	ag.acceptNeighbor(newNode) // TODO(yifan): go ag.acceptNeighbor()
+	go ag.acceptNeighbor(newNode)
 	return
 }
 
@@ -329,7 +331,7 @@ func (ag *agent) handleForwardJoin(msg *message.ForwardJoin) {
 		ag.addNodePassiveView(newNode)
 	}
 	node := chooseRandomNode(ag.aView, msg.GetId())
-	ag.forwardJoin(node, newNode, ttl-1) // TODO(yifan): go ag.forwardJoin()
+	go ag.forwardJoin(node, newNode, ttl-1)
 	return
 }
 
@@ -372,12 +374,12 @@ func (ag *agent) handleShuffle(msg *message.Shuffle) {
 	if ttl > 0 && ag.aView.Len() > 1 {
 		node := chooseRandomNode(ag.aView, msg.GetId())
 		msg.Ttl = proto.Uint32(ttl - 1)
-		ag.forwardShuffle(node, msg) // TODO check error, go routine
+		go ag.forwardShuffle(node, msg)
 		return
 	}
 	candidates := msg.GetCandidates()
 	replyCandidates := chooseRandomCandidates(ag.pView, len(candidates))
-	ag.shuffleReply(msg, replyCandidates) // TODO check error, go routine
+	go ag.shuffleReply(msg, replyCandidates)
 	for _, candidate := range candidates {
 		node := &node.Node{
 			Id:   candidate.GetId(),
@@ -426,7 +428,7 @@ func (ag *agent) handleUserMessage(msg *message.UserMessage) {
 	defer ag.aView.Unlock()
 	for _, v := range ag.aView.Values() {
 		nd := v.(*node.Node)
-		ag.userMessage(nd, msg) // TODO(yifan) go ag.userMessage, check error
+		go ag.userMessage(nd, msg)
 	}
 	return
 }
