@@ -1,8 +1,12 @@
 package config
 
 import (
+	"bufio"
 	"flag"
+	"io"
 	"net"
+	"os"
+	"strings"
 )
 
 // Config describes the config of the system.
@@ -11,6 +15,8 @@ type Config struct {
 	Net string
 	// AddrStr is the local address string.
 	AddrStr string
+	// Peers is peer list.
+	Peers []string
 	// LocalTCPAddr is TCP address parsed from
 	// Net and AddrStr.
 	LocalTCPAddr *net.TCPAddr
@@ -44,10 +50,16 @@ type Config struct {
 }
 
 func ParseConfig() (*Config, error) {
+	var peerStr string
+	var peerFile string
+
 	cfg := new(Config)
 
 	flag.StringVar(&cfg.Net, "net", "tcp", "The network protocol")
 	flag.StringVar(&cfg.AddrStr, "addr", "localhost:8424", "The address the agent listens on")
+
+	flag.StringVar(&peerFile, "peer-file", "", "Peer list file")
+	flag.StringVar(&peerStr, "peers", "", "Comma-separated list of peers")
 
 	flag.IntVar(&cfg.Fanin, "fanin", 5, "The fan-in")
 	flag.IntVar(&cfg.Fanout, "fanout", 5, "The fan-out")
@@ -68,10 +80,41 @@ func ParseConfig() (*Config, error) {
 	flag.Parse()
 
 	// TODO check config.
+	if peerStr != "" {
+		cfg.Peers = strings.Split(peerStr, ",")
+	}
+	if peerFile != "" {
+		peers, err := parsePeerFile(peerFile)
+		if err != nil {
+			return nil, err
+		}
+		cfg.Peers = peers
+	}
 	tcpAddr, err := net.ResolveTCPAddr(cfg.Net, cfg.AddrStr)
 	if err != nil {
 		return nil, err
 	}
 	cfg.LocalTCPAddr = tcpAddr
 	return cfg, nil
+}
+
+func parsePeerFile(path string) ([]string, error) {
+	peers := make([]string, 0)
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	br := bufio.NewReader(f)
+
+	for {
+		line, err := br.ReadString('\n')
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return nil, err
+		}
+		peers = append(peers, line[:len(line)-1])
+	}
+	return peers, nil
 }

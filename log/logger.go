@@ -9,12 +9,13 @@ const (
 	verboseError = iota
 	verboseWarning
 	verboseInfo
+	verboseDebug
 )
 
 var verbose int
 
 func init() {
-	flag.IntVar(&verbose, "v", verboseWarning, "The log veboseness")
+	flag.IntVar(&verbose, "v", verboseInfo, "The log veboseness")
 }
 
 func Errorf(format string, args ...interface{}) {
@@ -33,10 +34,18 @@ func Warningf(format string, args ...interface{}) {
 	fmt.Printf(format, args...)
 }
 
-func Infoln(args ...interface{}) {
+func Infof(format string, args ...interface{}) {
 	if verbose < verboseInfo {
 		return
 	}
 	fmt.Printf("[INFO]: ")
-	fmt.Println(args...)
+	fmt.Printf(format, args...)
+}
+
+func Debugf(format string, args ...interface{}) {
+	if verbose < verboseDebug {
+		return
+	}
+	fmt.Printf("[DEBUG]: ")
+	fmt.Printf(format, args...)
 }

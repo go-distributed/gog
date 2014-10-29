@@ -19,11 +19,11 @@ import (
 
 // Agent describes the interface of an agent.
 type Agent interface {
-	// Serve( starts a standalone agent, waiting for
+	// Serve starts a standalone agent, waiting for
 	// incoming connections.
 	Serve() error
-	// Join joins the agent to the cluster.
-	Join(addr string) error
+	// Join joins the peers.
+	Join() error
 	// Leave causes the agent to leave the cluster.
 	Leave() error
 	// Broadcast broadcasts a message to the cluster.
@@ -451,34 +451,41 @@ func (ag *agent) handleUserMessage(msg *message.UserMessage) {
 
 // Join joins the node to the cluster by contacting the nodes provied in the
 // list.
-func (ag *agent) Join(addr string) error {
-	node := &node.Node{
-		Id:   addr,
-		Addr: addr,
-	}
-	tcpAddr, err := net.ResolveTCPAddr(ag.cfg.Net, node.Addr)
-	if err != nil {
-		// TODO(yifan) log.
-		return err
-	}
-	conn, err := net.DialTCP(ag.cfg.Net, nil, tcpAddr)
-	if err != nil {
-		// TODO(yifan) log.
-		return err
-	}
-	node.Conn = conn
-	if err := ag.join(node); err != nil {
-		return err
-	}
+func (ag *agent) Join() error {
+	for _, peer := range ag.cfg.Peers {
+		if peer == ag.id { // TODO change to hashed id.
+			continue
+		}
+		log.Infof("Try to join %s\n", peer)
+		node := &node.Node{
+			Id:   peer,
+			Addr: peer,
+		}
+		tcpAddr, err := net.ResolveTCPAddr(ag.cfg.Net, node.Addr)
+		if err != nil {
+			// TODO(yifan) log.
+			continue
+		}
+		conn, err := net.DialTCP(ag.cfg.Net, nil, tcpAddr)
+		if err != nil {
+			// TODO(yifan) log.
+			continue
+		}
+		node.Conn = conn
+		if err := ag.join(node); err != nil {
+			continue
+		}
 
-	ag.aView.Lock()
-	ag.pView.Lock()
-	defer ag.aView.Unlock()
-	defer ag.pView.Unlock()
+		ag.aView.Lock()
+		ag.pView.Lock()
+		defer ag.aView.Unlock()
+		defer ag.pView.Unlock()
 
-	ag.addNodeActiveView(node)
-	go ag.serveConn(node.Conn, node)
-	return nil
+		ag.addNodeActiveView(node)
+		go ag.serveConn(node.Conn, node)
+		return nil
+	}
+	return ErrNoAvailablePeers
 }
 
 // Leave causes the agent to leave the cluster.
@@ -525,13 +532,13 @@ func (ag *agent) List() {
 	ag.pView.Lock()
 	defer ag.aView.Unlock()
 	defer ag.pView.Unlock()
-	fmt.Println("AView:")
+	log.Infof("AView:\n")
 	for _, v := range ag.aView.Values() {
-		fmt.Println(v.(*node.Node))
+		log.Infof("%v\n", v.(*node.Node))
 	}
-	fmt.Println("PView:")
+	log.Infof("PView:\n")
 	for _, v := range ag.pView.Values() {
-		fmt.Println(v.(*node.Node))
+		log.Infof("%v\n", v.(*node.Node))
 	}
 }
 

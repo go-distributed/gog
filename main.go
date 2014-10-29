@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"flag"
 	"fmt"
 	"os"
 
@@ -11,8 +10,6 @@ import (
 )
 
 func main() {
-	var peer string
-	flag.StringVar(&peer, "peer_addr", "", "contact node")
 	config, err := config.ParseConfig()
 	if err != nil {
 		fmt.Println("Failed to parse configuration", err)
@@ -22,11 +19,13 @@ func main() {
 	ag.RegisterMessageHandler(msgCallBack)
 	fmt.Printf("serving at %v...\n", config.AddrStr)
 	go ag.Serve()
-	if peer != "" {
-		fmt.Println("ready to join", peer)
-		ag.Join(peer)
-	}
 
+	if config.Peers != nil {
+		if err := ag.Join(); err != nil {
+			fmt.Println("No available peers")
+			return
+		}
+	}
 	input := bufio.NewReader(os.Stdin)
 	for {
 		fmt.Println("input a message:")

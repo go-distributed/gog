@@ -12,6 +12,7 @@ import (
 
 var (
 	ErrInvalidMessageType = errors.New("Invalid message type")
+	ErrNoAvailablePeers   = errors.New("No available peers")
 )
 
 // disconnect() sends a Disconnect message to the node and close the connection.
