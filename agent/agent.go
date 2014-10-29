@@ -91,7 +91,7 @@ func (ag *agent) Serve() error {
 	return nil
 }
 
-// serveNewConn listens on the TCP listener, waits for incoming connections.
+// serve listens on the TCP listener, waits for incoming connections.
 func (ag *agent) serve() {
 	for {
 		conn, err := ag.ln.AcceptTCP()
@@ -100,19 +100,17 @@ func (ag *agent) serve() {
 			continue
 		}
 		// TODO(Yifan): Set read time ount.
-		go ag.serveConn(conn)
+		go ag.serveConn(conn, nil)
 	}
 }
 
 // serveConn() serves a connection.
-func (ag *agent) serveConn(conn *net.TCPConn) {
-	defer conn.Close()
+func (ag *agent) serveConn(conn *net.TCPConn, node *node.Node) {
 	for {
 		msg, err := ag.codec.ReadMsg(conn)
 		if err != nil {
 			log.Errorf("Agent.serveConn(): Failed to decode message: %v\n", err)
-			// TODO(yifan): Now what? Drop the conn?
-			// Update the view?
+			ag.replaceActiveNode(node)
 			return
 		}
 		// Dispatch messages.
@@ -133,8 +131,7 @@ func (ag *agent) serveConn(conn *net.TCPConn) {
 			ag.handleUserMessage(msg.(*message.UserMessage))
 		default:
 			log.Errorf("Agent.serveConn(): Unexpected message type: %T\n", t)
-			// TODO(yifan): Now what? Drop the conn?
-			// Update the view?
+			ag.replaceActiveNode(node)
 			return
 		}
 	}
@@ -220,10 +217,18 @@ func (ag *agent) addNodePassiveView(node *node.Node) {
 // replaceActiveNode() replaces a "dead" node in the active
 // view with a node randomly chosen from the passive view.
 func (ag *agent) replaceActiveNode(node *node.Node) {
+	if node == nil {
+		return
+	}
 	ag.aView.Lock()
 	ag.pView.Lock()
 	defer ag.aView.Unlock()
 	defer ag.pView.Unlock()
+
+	if !ag.aView.Has(node.Id) {
+		/* It's voluntarily disconnected. */
+		return
+	}
 
 	// TODO add the node to passive view instead of removing.
 	node.Conn.Close()
@@ -232,7 +237,12 @@ func (ag *agent) replaceActiveNode(node *node.Node) {
 	// Note that this Will panic automatically if the passive view is empty.
 	nd := chooseRandomNode(ag.pView, "")
 	if nd == nil {
-		panic("No nodes in passive view")
+		log.Warningf("No nodes in passive view\n")
+		if ag.aView.Len() == 0 {
+			log.Warningf("Isolated node\n")
+		}
+		// TODO trigger a shuffle.
+		return
 	}
 	ag.pView.Remove(nd.Id)
 	ag.neighbor(nd, message.Neighbor_Low)
@@ -240,13 +250,11 @@ func (ag *agent) replaceActiveNode(node *node.Node) {
 	for ag.aView.Len() == 0 {
 		nd = chooseRandomNode(ag.pView, "")
 		if nd == nil {
-			panic("No nodes in passive view")
+			log.Warningf("Isolated node\n")
 		}
 		ag.pView.Remove(nd.Id)
 		ag.neighbor(nd, message.Neighbor_High)
-		fmt.Println("neighboring")
 	}
-	fmt.Println("neighboring done")
 }
 
 // handleJoin() handles Join message. If it accepts the request, it will add
@@ -265,7 +273,7 @@ func (ag *agent) handleJoin(conn *net.TCPConn, msg *message.Join) {
 	defer ag.pView.Unlock()
 
 	ag.addNodeActiveView(newNode)
-	go ag.serveConn(newNode.Conn)
+	go ag.serveConn(newNode.Conn, newNode)
 
 	// Send ForwardJoin message to all other the nodes in the active view.
 	for _, v := range ag.aView.Values() {
@@ -301,7 +309,7 @@ func (ag *agent) handleNeighbor(conn *net.TCPConn, msg *message.Neighbor) {
 		}
 	}
 	ag.addNodeActiveView(newNode)
-	go ag.serveConn(newNode.Conn)
+	go ag.serveConn(newNode.Conn, newNode)
 	go ag.acceptNeighbor(newNode)
 	return
 }
@@ -378,7 +386,8 @@ func (ag *agent) handleShuffle(msg *message.Shuffle) {
 		return
 	}
 	candidates := msg.GetCandidates()
-	replyCandidates := chooseRandomCandidates(ag.pView, len(candidates))
+	replyCandidates := chooseRandomCandidates(ag.aView, ag.cfg.Ka)
+	replyCandidates = append(replyCandidates, chooseRandomCandidates(ag.pView, ag.cfg.Kp)...)
 	go ag.shuffleReply(msg, replyCandidates)
 	for _, candidate := range candidates {
 		node := &node.Node{
@@ -461,7 +470,7 @@ func (ag *agent) Join(addr string) error {
 	defer ag.pView.Unlock()
 
 	ag.addNodeActiveView(node)
-	go ag.serveConn(node.Conn)
+	go ag.serveConn(node.Conn, node)
 	return nil
 }
 

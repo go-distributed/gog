@@ -34,7 +34,7 @@ func (ag *agent) forwardJoin(node, newNode *node.Node, ttl uint32) {
 		Ttl:        proto.Uint32(ttl),
 	}
 	if err := ag.codec.WriteMsg(msg, node.Conn); err != nil {
-		ag.replaceActiveNode(node)
+		node.Conn.Close()
 	}
 }
 
@@ -56,7 +56,7 @@ func (ag *agent) acceptNeighbor(node *node.Node) {
 		Accept: proto.Bool(true),
 	}
 	if err := ag.codec.WriteMsg(msg, node.Conn); err != nil {
-		ag.replaceActiveNode(node)
+		node.Conn.Close()
 	}
 }
 
@@ -91,6 +91,7 @@ func (ag *agent) neighbor(node *node.Node, priority message.Neighbor_Priority) (
 	}
 	if err := ag.codec.WriteMsg(msg, node.Conn); err != nil {
 		// TODO(yifan) log.
+		node.Conn.Close()
 		return err, false
 	}
 	recvMsg, err := ag.codec.ReadMsg(node.Conn)
@@ -106,7 +107,7 @@ func (ag *agent) neighbor(node *node.Node, priority message.Neighbor_Priority) (
 	}
 	if reply.GetAccept() {
 		ag.addNodeActiveView(node)
-		go ag.serveConn(node.Conn)
+		go ag.serveConn(node.Conn, node)
 		return nil, true
 	}
 	ag.addNodePassiveView(node)
@@ -116,14 +117,14 @@ func (ag *agent) neighbor(node *node.Node, priority message.Neighbor_Priority) (
 // userMessage() sends a user message to the node.
 func (ag *agent) userMessage(node *node.Node, msg proto.Message) {
 	if err := ag.codec.WriteMsg(msg, node.Conn); err != nil {
-		ag.replaceActiveNode(node)
+		node.Conn.Close()
 	}
 }
 
 func (ag *agent) forwardShuffle(node *node.Node, msg *message.Shuffle) {
 	msg.Id = proto.String(ag.id)
 	if err := ag.codec.WriteMsg(msg, node.Conn); err != nil {
-		ag.replaceActiveNode(node)
+		node.Conn.Close()
 	}
 }
 
@@ -159,6 +160,6 @@ func (ag *agent) shuffle(node *node.Node, candidates []*message.Candidate) {
 		Ttl:        proto.Uint32(uint32(ag.cfg.SRWL)),
 	}
 	if err := ag.codec.WriteMsg(msg, node.Conn); err != nil {
-		ag.replaceActiveNode(node)
+		node.Conn.Close()
 	}
 }
