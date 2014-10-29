@@ -71,7 +71,7 @@ func NewAgent(cfg *config.Config) Agent {
 	codec.Register(&message.ShuffleReply{})
 
 	return &agent{
-		id:        cfg.AddrStr, // TODO(yifan): other id.
+		id:        addrToId(cfg.LocalTCPAddr),
 		cfg:       cfg,
 		codec:     codec,
 		aView:     arraymap.NewArrayMap(),
@@ -453,19 +453,20 @@ func (ag *agent) handleUserMessage(msg *message.UserMessage) {
 // list.
 func (ag *agent) Join() error {
 	for _, peer := range ag.cfg.Peers {
-		if peer == ag.id { // TODO change to hashed id.
-			continue
-		}
-		log.Infof("Try to join %s\n", peer)
-		node := &node.Node{
-			Id:   peer,
-			Addr: peer,
-		}
-		tcpAddr, err := net.ResolveTCPAddr(ag.cfg.Net, node.Addr)
+		tcpAddr, err := net.ResolveTCPAddr(ag.cfg.Net, peer)
 		if err != nil {
 			// TODO(yifan) log.
 			continue
 		}
+		node := &node.Node{
+			Id:   addrToId(tcpAddr),
+			Addr: peer,
+		}
+		if node.Id == ag.id {
+			continue
+		}
+
+		log.Infof("Trying to join %s...\n", node.Id)
 		conn, err := net.DialTCP(ag.cfg.Net, nil, tcpAddr)
 		if err != nil {
 			// TODO(yifan) log.
@@ -585,4 +586,12 @@ func chooseRandomCandidates(view *arraymap.ArrayMap, n int) []*message.Candidate
 		}
 	}
 	return candidates
+}
+
+func addrToId(addr *net.TCPAddr) string {
+	zero := net.ParseIP("0.0.0.0")
+	if addr.IP == nil || addr.IP.IsLoopback() || addr.IP.Equal(zero) {
+		return fmt.Sprintf("self:%d", addr.Port)
+	}
+	return addr.String()
 }
