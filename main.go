@@ -19,6 +19,7 @@ func main() {
 		return
 	}
 	ag := agent.NewAgent(config)
+	ag.RegisterMessageHandler(msgCallBack)
 	fmt.Printf("serving at %v...\n", config.AddrStr)
 	go ag.Serve()
 	if peer != "" {
@@ -40,4 +41,8 @@ func main() {
 		}
 		ag.Broadcast([]byte(bs))
 	}
+}
+
+func msgCallBack(msg []byte) {
+	fmt.Println(string(msg))
 }

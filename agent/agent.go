@@ -28,6 +28,8 @@ type Agent interface {
 	Leave() error
 	// Broadcast broadcasts a message to the cluster.
 	Broadcast(msg []byte) error
+	// RegisterMessageHandler registers a user provided callback.
+	RegisterMessageHandler(cb func([]byte))
 	// Count does a broadcast and returns a channel of
 	// nodes, which can be used to compute the broadcast
 	// delay.
@@ -51,7 +53,8 @@ type agent struct {
 	// The codec.
 	codec codec.Codec
 	// Message Buffer.
-	msgBuffer *arraymap.ArrayMap
+	msgBuffer   *arraymap.ArrayMap
+	msgCallBack func([]byte)
 }
 
 // NewAgent creates a new agent.
@@ -239,7 +242,7 @@ func (ag *agent) replaceActiveNode(node *node.Node) {
 	if nd == nil {
 		log.Warningf("No nodes in passive view\n")
 		if ag.aView.Len() == 0 {
-			log.Warningf("Isolated node\n")
+			log.Warningf("Lost all peers!\n")
 		}
 		// TODO trigger a shuffle.
 		return
@@ -250,7 +253,8 @@ func (ag *agent) replaceActiveNode(node *node.Node) {
 	for ag.aView.Len() == 0 {
 		nd = chooseRandomNode(ag.pView, "")
 		if nd == nil {
-			log.Warningf("Isolated node\n")
+			log.Warningf("Lost all peers!\n")
+			return
 		}
 		ag.pView.Remove(nd.Id)
 		ag.neighbor(nd, message.Neighbor_High)
@@ -433,6 +437,9 @@ func (ag *agent) handleUserMessage(msg *message.UserMessage) {
 	ag.msgBuffer.Append(hash, msg)
 	ag.msgBuffer.Unlock()
 
+	// Invoke user's callback.
+	go ag.msgCallBack(msg.GetPayload())
+
 	ag.aView.Lock()
 	defer ag.aView.Unlock()
 	for _, v := range ag.aView.Values() {
@@ -498,6 +505,12 @@ func (ag *agent) Broadcast(payload []byte) error {
 		ag.userMessage(nd, msg)
 	}
 	return nil
+}
+
+// RegisterMessageHandler registers a user provided message callback
+// to handle messages.
+func (ag *agent) RegisterMessageHandler(cb func([]byte)) {
+	ag.msgCallBack = cb
 }
 
 // Count does a broadcast and returns a channel of
