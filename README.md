@@ -1,7 +1,7 @@
 gog
 ===
 
-A gossip-based broadcast system
+Gossip Over Gophers
 
 [![GoDoc] (https://godoc.org/github.com/go-distributed/gog?status.png)](https://godoc.org/github.com/go-distributed/gog)
 
