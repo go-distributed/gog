@@ -27,6 +27,12 @@ message Join {
         required string addr = 2;
 }
 
+// The Join reply.
+message JoinReply {
+        required string id   = 1;
+        required bool accept = 2;
+}
+
 // The Neighbor request.
 message Neighbor {
         required string id = 1;

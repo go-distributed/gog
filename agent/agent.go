@@ -63,6 +63,7 @@ func NewAgent(cfg *config.Config) Agent {
 	codec := codec.NewProtobufCodec()
 	codec.Register(&message.UserMessage{})
 	codec.Register(&message.Join{})
+	codec.Register(&message.JoinReply{})
 	codec.Register(&message.ForwardJoin{})
 	codec.Register(&message.Neighbor{})
 	codec.Register(&message.NeighborReply{})
@@ -71,7 +72,7 @@ func NewAgent(cfg *config.Config) Agent {
 	codec.Register(&message.ShuffleReply{})
 
 	return &agent{
-		id:        addrToId(cfg.LocalTCPAddr),
+		id:        cfg.AddrStr,
 		cfg:       cfg,
 		codec:     codec,
 		aView:     arraymap.NewArrayMap(),
@@ -276,8 +277,14 @@ func (ag *agent) handleJoin(conn *net.TCPConn, msg *message.Join) {
 	defer ag.aView.Unlock()
 	defer ag.pView.Unlock()
 
-	ag.addNodeActiveView(newNode)
-	go ag.serveConn(newNode.Conn, newNode)
+	if newNode.Id != ag.id {
+		ag.addNodeActiveView(newNode)
+		go ag.serveConn(newNode.Conn, newNode)
+		go ag.acceptJoin(newNode)
+
+	} else {
+		go ag.rejectJoin(newNode)
+	}
 
 	// Send ForwardJoin message to all other the nodes in the active view.
 	for _, v := range ag.aView.Values() {
@@ -334,7 +341,6 @@ func (ag *agent) handleForwardJoin(msg *message.ForwardJoin) {
 
 	if ttl == 0 || ag.aView.Len() == 1 { // TODO(yifan): Loose this?
 		if ag.id != newNode.Id && !ag.aView.Has(newNode.Id) {
-			// TODO release the lock when calling neighbor.
 			ag.neighbor(newNode, message.Neighbor_High)
 		}
 		return
@@ -366,8 +372,8 @@ func (ag *agent) handleDisconnect(msg *message.Disconnect) {
 	nd.Conn = nil
 	// We need at least one active node.
 	for ag.aView.Len() == 0 {
-		// TODO release the lock when calling neighbor.
 		nd = chooseRandomNode(ag.pView, "")
+		ag.pView.Remove(nd.Id)
 		ag.neighbor(nd, message.Neighbor_High)
 	}
 	ag.pView.Append(nd.Id, nd)
@@ -458,15 +464,9 @@ func (ag *agent) Join() error {
 			// TODO(yifan) log.
 			continue
 		}
-		node := &node.Node{
-			Id:   addrToId(tcpAddr),
-			Addr: peer,
-		}
-		if node.Id == ag.id {
-			continue
-		}
+		node := &node.Node{Addr: peer}
 
-		log.Infof("Trying to join %s...\n", node.Id)
+		log.Infof("Trying to join %s...\n", peer)
 		conn, err := net.DialTCP(ag.cfg.Net, nil, tcpAddr)
 		if err != nil {
 			// TODO(yifan) log.
@@ -474,16 +474,10 @@ func (ag *agent) Join() error {
 		}
 		node.Conn = conn
 		if err := ag.join(node); err != nil {
+			// TODO(yifan) log.
 			continue
 		}
-
-		ag.aView.Lock()
-		ag.pView.Lock()
-		defer ag.aView.Unlock()
-		defer ag.pView.Unlock()
-
-		ag.addNodeActiveView(node)
-		go ag.serveConn(node.Conn, node)
+		// Successfully Joined.
 		return nil
 	}
 	return ErrNoAvailablePeers
@@ -586,12 +580,4 @@ func chooseRandomCandidates(view *arraymap.ArrayMap, n int) []*message.Candidate
 		}
 	}
 	return candidates
-}
-
-func addrToId(addr *net.TCPAddr) string {
-	zero := net.ParseIP("0.0.0.0")
-	if addr.IP == nil || addr.IP.IsLoopback() || addr.IP.Equal(zero) {
-		return fmt.Sprintf("self:%d", addr.Port)
-	}
-	return addr.String()
 }

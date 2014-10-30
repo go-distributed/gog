@@ -11,6 +11,7 @@ It is generated from these files:
 It has these top-level messages:
 	UserMessage
 	Join
+	JoinReply
 	Neighbor
 	NeighborReply
 	ForwardJoin
@@ -219,6 +220,95 @@ func BenchmarkJoinProtoUnmarshal(b *testing.B) {
 		datas[i] = data
 	}
 	msg := &Join{}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		total += len(datas[i%10000])
+		if err := code_google_com_p_gogoprotobuf_proto.Unmarshal(datas[i%10000], msg); err != nil {
+			panic(err)
+		}
+	}
+	b.SetBytes(int64(total / b.N))
+}
+
+func TestJoinReplyProto(t *testing.T) {
+	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
+	p := NewPopulatedJoinReply(popr, false)
+	data, err := code_google_com_p_gogoprotobuf_proto.Marshal(p)
+	if err != nil {
+		panic(err)
+	}
+	msg := &JoinReply{}
+	if err := code_google_com_p_gogoprotobuf_proto.Unmarshal(data, msg); err != nil {
+		panic(err)
+	}
+	for i := range data {
+		data[i] = byte(popr.Intn(256))
+	}
+	if err := p.VerboseEqual(msg); err != nil {
+		t.Fatalf("%#v !VerboseProto %#v, since %v", msg, p, err)
+	}
+	if !p.Equal(msg) {
+		t.Fatalf("%#v !Proto %#v", msg, p)
+	}
+}
+
+func TestJoinReplyMarshalTo(t *testing.T) {
+	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
+	p := NewPopulatedJoinReply(popr, false)
+	size := p.Size()
+	data := make([]byte, size)
+	for i := range data {
+		data[i] = byte(popr.Intn(256))
+	}
+	_, err := p.MarshalTo(data)
+	if err != nil {
+		panic(err)
+	}
+	msg := &JoinReply{}
+	if err := code_google_com_p_gogoprotobuf_proto.Unmarshal(data, msg); err != nil {
+		panic(err)
+	}
+	for i := range data {
+		data[i] = byte(popr.Intn(256))
+	}
+	if err := p.VerboseEqual(msg); err != nil {
+		t.Fatalf("%#v !VerboseProto %#v, since %v", msg, p, err)
+	}
+	if !p.Equal(msg) {
+		t.Fatalf("%#v !Proto %#v", msg, p)
+	}
+}
+
+func BenchmarkJoinReplyProtoMarshal(b *testing.B) {
+	popr := math_rand.New(math_rand.NewSource(616))
+	total := 0
+	pops := make([]*JoinReply, 10000)
+	for i := 0; i < 10000; i++ {
+		pops[i] = NewPopulatedJoinReply(popr, false)
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		data, err := code_google_com_p_gogoprotobuf_proto.Marshal(pops[i%10000])
+		if err != nil {
+			panic(err)
+		}
+		total += len(data)
+	}
+	b.SetBytes(int64(total / b.N))
+}
+
+func BenchmarkJoinReplyProtoUnmarshal(b *testing.B) {
+	popr := math_rand.New(math_rand.NewSource(616))
+	total := 0
+	datas := make([][]byte, 10000)
+	for i := 0; i < 10000; i++ {
+		data, err := code_google_com_p_gogoprotobuf_proto.Marshal(NewPopulatedJoinReply(popr, false))
+		if err != nil {
+			panic(err)
+		}
+		datas[i] = data
+	}
+	msg := &JoinReply{}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		total += len(datas[i%10000])
@@ -890,6 +980,25 @@ func TestJoinJSON(t *testing1.T) {
 		t.Fatalf("%#v !Json Equal %#v", msg, p)
 	}
 }
+func TestJoinReplyJSON(t *testing1.T) {
+	popr := math_rand1.New(math_rand1.NewSource(time1.Now().UnixNano()))
+	p := NewPopulatedJoinReply(popr, true)
+	jsondata, err := encoding_json.Marshal(p)
+	if err != nil {
+		panic(err)
+	}
+	msg := &JoinReply{}
+	err = encoding_json.Unmarshal(jsondata, msg)
+	if err != nil {
+		panic(err)
+	}
+	if err := p.VerboseEqual(msg); err != nil {
+		t.Fatalf("%#v !VerboseProto %#v, since %v", msg, p, err)
+	}
+	if !p.Equal(msg) {
+		t.Fatalf("%#v !Json Equal %#v", msg, p)
+	}
+}
 func TestNeighborJSON(t *testing1.T) {
 	popr := math_rand1.New(math_rand1.NewSource(time1.Now().UnixNano()))
 	p := NewPopulatedNeighbor(popr, true)
@@ -1076,6 +1185,38 @@ func TestJoinProtoCompactText(t *testing2.T) {
 	p := NewPopulatedJoin(popr, true)
 	data := code_google_com_p_gogoprotobuf_proto1.CompactTextString(p)
 	msg := &Join{}
+	if err := code_google_com_p_gogoprotobuf_proto1.UnmarshalText(data, msg); err != nil {
+		panic(err)
+	}
+	if err := p.VerboseEqual(msg); err != nil {
+		t.Fatalf("%#v !VerboseProto %#v, since %v", msg, p, err)
+	}
+	if !p.Equal(msg) {
+		t.Fatalf("%#v !Proto %#v", msg, p)
+	}
+}
+
+func TestJoinReplyProtoText(t *testing2.T) {
+	popr := math_rand2.New(math_rand2.NewSource(time2.Now().UnixNano()))
+	p := NewPopulatedJoinReply(popr, true)
+	data := code_google_com_p_gogoprotobuf_proto1.MarshalTextString(p)
+	msg := &JoinReply{}
+	if err := code_google_com_p_gogoprotobuf_proto1.UnmarshalText(data, msg); err != nil {
+		panic(err)
+	}
+	if err := p.VerboseEqual(msg); err != nil {
+		t.Fatalf("%#v !VerboseProto %#v, since %v", msg, p, err)
+	}
+	if !p.Equal(msg) {
+		t.Fatalf("%#v !Proto %#v", msg, p)
+	}
+}
+
+func TestJoinReplyProtoCompactText(t *testing2.T) {
+	popr := math_rand2.New(math_rand2.NewSource(time2.Now().UnixNano()))
+	p := NewPopulatedJoinReply(popr, true)
+	data := code_google_com_p_gogoprotobuf_proto1.CompactTextString(p)
+	msg := &JoinReply{}
 	if err := code_google_com_p_gogoprotobuf_proto1.UnmarshalText(data, msg); err != nil {
 		panic(err)
 	}
@@ -1329,6 +1470,15 @@ func TestJoinStringer(t *testing3.T) {
 		t.Fatalf("String want %v got %v", s1, s2)
 	}
 }
+func TestJoinReplyStringer(t *testing3.T) {
+	popr := math_rand3.New(math_rand3.NewSource(time3.Now().UnixNano()))
+	p := NewPopulatedJoinReply(popr, false)
+	s1 := p.String()
+	s2 := fmt.Sprintf("%v", p)
+	if s1 != s2 {
+		t.Fatalf("String want %v got %v", s1, s2)
+	}
+}
 func TestNeighborStringer(t *testing3.T) {
 	popr := math_rand3.New(math_rand3.NewSource(time3.Now().UnixNano()))
 	p := NewPopulatedNeighbor(popr, false)
@@ -1454,6 +1604,41 @@ func BenchmarkJoinSize(b *testing4.B) {
 	pops := make([]*Join, 1000)
 	for i := 0; i < 1000; i++ {
 		pops[i] = NewPopulatedJoin(popr, false)
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		total += pops[i%1000].Size()
+	}
+	b.SetBytes(int64(total / b.N))
+}
+
+func TestJoinReplySize(t *testing4.T) {
+	popr := math_rand4.New(math_rand4.NewSource(time4.Now().UnixNano()))
+	p := NewPopulatedJoinReply(popr, true)
+	size2 := code_google_com_p_gogoprotobuf_proto2.Size(p)
+	data, err := code_google_com_p_gogoprotobuf_proto2.Marshal(p)
+	if err != nil {
+		panic(err)
+	}
+	size := p.Size()
+	if len(data) != size {
+		t.Fatalf("size %v != marshalled size %v", size, len(data))
+	}
+	if size2 != size {
+		t.Fatalf("size %v != before marshal proto.Size %v", size, size2)
+	}
+	size3 := code_google_com_p_gogoprotobuf_proto2.Size(p)
+	if size3 != size {
+		t.Fatalf("size %v != after marshal proto.Size %v", size, size3)
+	}
+}
+
+func BenchmarkJoinReplySize(b *testing4.B) {
+	popr := math_rand4.New(math_rand4.NewSource(616))
+	total := 0
+	pops := make([]*JoinReply, 1000)
+	for i := 0; i < 1000; i++ {
+		pops[i] = NewPopulatedJoinReply(popr, false)
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -1733,6 +1918,19 @@ func TestJoinGoString(t *testing5.T) {
 		panic(err)
 	}
 }
+func TestJoinReplyGoString(t *testing5.T) {
+	popr := math_rand5.New(math_rand5.NewSource(time5.Now().UnixNano()))
+	p := NewPopulatedJoinReply(popr, false)
+	s1 := p.GoString()
+	s2 := fmt1.Sprintf("%#v", p)
+	if s1 != s2 {
+		t.Fatalf("GoString want %v got %v", s1, s2)
+	}
+	_, err := go_parser.ParseExpr(s1)
+	if err != nil {
+		panic(err)
+	}
+}
 func TestNeighborGoString(t *testing5.T) {
 	popr := math_rand5.New(math_rand5.NewSource(time5.Now().UnixNano()))
 	p := NewPopulatedNeighbor(popr, false)
@@ -1847,6 +2045,21 @@ func TestJoinVerboseEqual(t *testing6.T) {
 		panic(err)
 	}
 	msg := &Join{}
+	if err := code_google_com_p_gogoprotobuf_proto3.Unmarshal(data, msg); err != nil {
+		panic(err)
+	}
+	if err := p.VerboseEqual(msg); err != nil {
+		t.Fatalf("%#v !VerboseEqual %#v, since %v", msg, p, err)
+	}
+}
+func TestJoinReplyVerboseEqual(t *testing6.T) {
+	popr := math_rand6.New(math_rand6.NewSource(time6.Now().UnixNano()))
+	p := NewPopulatedJoinReply(popr, false)
+	data, err := code_google_com_p_gogoprotobuf_proto3.Marshal(p)
+	if err != nil {
+		panic(err)
+	}
+	msg := &JoinReply{}
 	if err := code_google_com_p_gogoprotobuf_proto3.Unmarshal(data, msg); err != nil {
 		panic(err)
 	}

@@ -66,22 +66,78 @@ func (ag *agent) join(node *node.Node) error {
 		Id:   proto.String(ag.id),
 		Addr: proto.String(ag.cfg.AddrStr),
 	}
-	return ag.codec.WriteMsg(msg, node.Conn)
+	if err := ag.codec.WriteMsg(msg, node.Conn); err != nil {
+		node.Conn.Close()
+		return err
+	}
+	recvMsg, err := ag.codec.ReadMsg(node.Conn)
+	if err != nil {
+		// TODO(yifan) log.
+		node.Conn.Close()
+		return err
+	}
+	reply, ok := recvMsg.(*message.JoinReply)
+	if !ok {
+		node.Conn.Close()
+		return ErrInvalidMessageType
+	}
+	id, accept := reply.GetId(), reply.GetAccept()
+	node.Id = id
+
+	if accept {
+		ag.aView.Lock()
+		ag.pView.Lock()
+		defer ag.aView.Unlock()
+		defer ag.pView.Unlock()
+
+		ag.addNodeActiveView(node)
+		go ag.serveConn(node.Conn, node)
+	}
+
+	return nil
+}
+
+func (ag *agent) acceptJoin(node *node.Node) error {
+	msg := &message.JoinReply{
+		Id:     proto.String(ag.id),
+		Accept: proto.Bool(true),
+	}
+	if err := ag.codec.WriteMsg(msg, node.Conn); err != nil {
+		node.Conn.Close()
+		return err
+	}
+	return nil
+}
+
+func (ag *agent) rejectJoin(node *node.Node) error {
+	defer node.Conn.Close()
+	msg := &message.JoinReply{
+		Id:     proto.String(ag.id),
+		Accept: proto.Bool(false),
+	}
+
+	if err := ag.codec.WriteMsg(msg, node.Conn); err != nil {
+		return err
+	}
+	return nil
 }
 
 // neighbor() sends a Neighbor message, and wait for the reply.
 // If the other side accepts the request, we add the node to the active view.
-func (ag *agent) neighbor(node *node.Node, priority message.Neighbor_Priority) (error, bool) {
+func (ag *agent) neighbor(node *node.Node, priority message.Neighbor_Priority) (bool, error) {
+	ag.aView.Unlock()
+	ag.pView.Unlock()
+
 	if node.Conn == nil {
 		addr, err := net.ResolveTCPAddr(ag.cfg.Net, node.Addr)
 		if err != nil {
 			// TODO(yifan) log.
-			return err, false
+			return false, err
 		}
 		conn, err := net.DialTCP(ag.cfg.Net, nil, addr)
 		if err != nil {
 			// TODO(yifan) log.
-			return err, false
+			return false, err
 		}
 		node.Conn = conn
 	}
@@ -93,26 +149,29 @@ func (ag *agent) neighbor(node *node.Node, priority message.Neighbor_Priority) (
 	if err := ag.codec.WriteMsg(msg, node.Conn); err != nil {
 		// TODO(yifan) log.
 		node.Conn.Close()
-		return err, false
+		return false, err
 	}
 	recvMsg, err := ag.codec.ReadMsg(node.Conn)
 	if err != nil {
 		// TODO(yifan) log.
 		node.Conn.Close()
-		return err, false
+		return false, err
 	}
 	reply, ok := recvMsg.(*message.NeighborReply)
 	if !ok {
 		node.Conn.Close()
-		return ErrInvalidMessageType, false
+		return false, ErrInvalidMessageType
 	}
+
+	ag.aView.Lock()
+	ag.pView.Lock()
 	if reply.GetAccept() {
 		ag.addNodeActiveView(node)
 		go ag.serveConn(node.Conn, node)
-		return nil, true
+		return true, nil
 	}
 	ag.addNodePassiveView(node)
-	return nil, false
+	return true, nil
 }
 
 // userMessage() sends a user message to the node.
