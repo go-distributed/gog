@@ -23,7 +23,7 @@ func main() {
 	if config.Peers != nil {
 		if err := ag.Join(); err != nil {
 			fmt.Println("No available peers")
-			return
+			//return
 		}
 	}
 	input := bufio.NewReader(os.Stdin)

@@ -113,7 +113,7 @@ func (ag *agent) serveConn(conn *net.TCPConn, node *node.Node) {
 	for {
 		msg, err := ag.codec.ReadMsg(conn)
 		if err != nil {
-			log.Errorf("Agent.serveConn(): Failed to decode message: %v\n", err)
+			//log.Errorf("Agent.serveConn(): Failed to decode message: %v\n", err)
 			ag.replaceActiveNode(node)
 			return
 		}
@@ -222,6 +222,7 @@ func (ag *agent) addNodePassiveView(node *node.Node) {
 // view with a node randomly chosen from the passive view.
 func (ag *agent) replaceActiveNode(node *node.Node) {
 	if node == nil {
+		/* The listening socket. */
 		return
 	}
 	ag.aView.Lock()
@@ -235,8 +236,9 @@ func (ag *agent) replaceActiveNode(node *node.Node) {
 	}
 
 	// TODO add the node to passive view instead of removing.
-	node.Conn.Close()
 	ag.aView.Remove(node.Id)
+	node.Conn.Close()
+	node.Conn = nil
 
 	// Note that this Will panic automatically if the passive view is empty.
 	nd := chooseRandomNode(ag.pView, "")
@@ -349,7 +351,9 @@ func (ag *agent) handleForwardJoin(msg *message.ForwardJoin) {
 		ag.addNodePassiveView(newNode)
 	}
 	node := chooseRandomNode(ag.aView, msg.GetId())
-	go ag.forwardJoin(node, newNode, ttl-1)
+	if node != nil {
+		go ag.forwardJoin(node, newNode, ttl-1)
+	}
 	return
 }
 
@@ -358,25 +362,10 @@ func (ag *agent) handleForwardJoin(msg *message.ForwardJoin) {
 func (ag *agent) handleDisconnect(msg *message.Disconnect) {
 	id := msg.GetId()
 
-	ag.aView.Lock()
-	ag.pView.Lock()
-	defer ag.aView.Unlock()
-	defer ag.pView.Unlock()
-
-	if !ag.aView.Has(id) {
-		return
-	}
+	ag.aView.RLock()
 	nd := ag.aView.GetValueOf(id).(*node.Node)
-	ag.aView.Remove(id)
-	nd.Conn.Close()
-	nd.Conn = nil
-	// We need at least one active node.
-	for ag.aView.Len() == 0 {
-		nd = chooseRandomNode(ag.pView, "")
-		ag.pView.Remove(nd.Id)
-		ag.neighbor(nd, message.Neighbor_High)
-	}
-	ag.pView.Append(nd.Id, nd)
+	ag.aView.RUnlock()
+	ag.replaceActiveNode(nd)
 	return
 }
 
