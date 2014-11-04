@@ -238,7 +238,6 @@ func (ag *agent) replaceActiveNode(node *node.Node) {
 	// TODO add the node to passive view instead of removing.
 	ag.aView.Remove(node.Id)
 	node.Conn.Close()
-	node.Conn = nil
 
 	// Note that this Will panic automatically if the passive view is empty.
 	nd := chooseRandomNode(ag.pView, "")
@@ -351,9 +350,7 @@ func (ag *agent) handleForwardJoin(msg *message.ForwardJoin) {
 		ag.addNodePassiveView(newNode)
 	}
 	node := chooseRandomNode(ag.aView, msg.GetId())
-	if node != nil {
-		go ag.forwardJoin(node, newNode, ttl-1)
-	}
+	go ag.forwardJoin(node, newNode, ttl-1)
 	return
 }
 
