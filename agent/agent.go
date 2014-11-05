@@ -147,6 +147,16 @@ func (ag *agent) healLoop() {
 	for {
 		select {
 		case <-tick:
+			ag.aView.Lock()
+			ag.pView.Lock()
+			if ag.aView.Len() < ag.cfg.AViewMinSize {
+				if ag.pView.Len() > 0 {
+					nd := chooseRandomNode(ag.pView, "")
+					ag.neighbor(nd, message.Neighbor_Low)
+				}
+			}
+			ag.aView.Unlock()
+			ag.pView.Unlock()
 		}
 	}
 }
@@ -199,7 +209,7 @@ func (ag *agent) addNodeActiveView(node *node.Node) {
 	if ag.aView.Has(node.Id) {
 		return
 	}
-	if ag.aView.Len() == ag.cfg.AViewSize {
+	if ag.aView.Len() == ag.cfg.AViewMaxSize {
 		n := chooseRandomNode(ag.aView, "")
 		go ag.disconnect(n)
 		ag.aView.Remove(n.Id)
@@ -322,7 +332,7 @@ func (ag *agent) handleNeighbor(conn *net.TCPConn, msg *message.Neighbor) {
 	defer ag.aView.Unlock()
 	defer ag.pView.Unlock()
 
-	if ag.aView.Len() == ag.cfg.AViewSize {
+	if ag.aView.Len() == ag.cfg.AViewMaxSize {
 		if msg.GetPriority() == message.Neighbor_Low {
 			go ag.rejectNeighbor(newNode)
 			// TODO(yifan): Add the node to passive view.
@@ -468,7 +478,8 @@ func (ag *agent) Join() error {
 			continue
 		}
 		node.Conn = conn
-		if err := ag.join(node); err != nil {
+		accepted, err := ag.join(node)
+		if !accepted || err != nil {
 			// TODO(yifan) log.
 			continue
 		}

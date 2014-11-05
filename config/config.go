@@ -20,15 +20,10 @@ type Config struct {
 	// LocalTCPAddr is TCP address parsed from
 	// Net and AddrStr.
 	LocalTCPAddr *net.TCPAddr
-	// Fanin is the nodes we allow to have
-	// us in their active view.
-	Fanin int
-	// Fanout is the number of nodes in our
-	// active view.
-	Fanout int
-	// AViewSize is the size of the active view.
-	// It is equal to Fanout.
-	AViewSize int
+	// AViewMinSize is the minimum size of the active view.
+	AViewMinSize int
+	// AViewMaxSize is the maximum size of the active view.
+	AViewMaxSize int
 	// PViewSize is the size of the passive view.
 	PViewSize int
 	// Ka is the number of nodes to choose from active view
@@ -63,18 +58,16 @@ func ParseConfig() (*Config, error) {
 	flag.StringVar(&peerFile, "peer-file", "", "Peer list file")
 	flag.StringVar(&peerStr, "peers", "", "Comma-separated list of peers")
 
-	flag.IntVar(&cfg.Fanin, "fanin", 5, "The fan-in")
-	flag.IntVar(&cfg.Fanout, "fanout", 5, "The fan-out")
-
-	flag.IntVar(&cfg.AViewSize, "active_view_size", 3, "The size of the active view")
-	flag.IntVar(&cfg.PViewSize, "passive_view_size", 4, "The size of the passive view")
+	flag.IntVar(&cfg.AViewMinSize, "min_active_view_size", 3, "The minimum size of the active view")
+	flag.IntVar(&cfg.AViewMaxSize, "max_active_view_size", 5, "The maximum size of the active view")
+	flag.IntVar(&cfg.PViewSize, "passive_view_size", 5, "The size of the passive view")
 
 	flag.IntVar(&cfg.Ka, "ka", 1, "The number of active nodes to shuffle")
 	flag.IntVar(&cfg.Kp, "kp", 3, "The number of passive nodes to shuffle")
 
 	flag.IntVar(&cfg.ARWL, "arwl", 5, "The active random walk length")
 	flag.IntVar(&cfg.PRWL, "prwl", 5, "The passive random walk length")
-	flag.IntVar(&cfg.SRWL, "srwl", 1, "The shuffle random walk length")
+	flag.IntVar(&cfg.SRWL, "srwl", 3, "The shuffle random walk length")
 
 	flag.IntVar(&cfg.MLife, "msg_life", 500, "The default message life (milliconds)")
 	flag.IntVar(&cfg.ShuffleDuration, "shuffle_duration", 5, "The default shuffle duration (seconds)")

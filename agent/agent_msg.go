@@ -60,30 +60,30 @@ func (ag *agent) acceptNeighbor(node *node.Node) {
 	}
 }
 
-func (ag *agent) join(node *node.Node) error {
+func (ag *agent) join(node *node.Node) (bool, error) {
 	msg := &message.Join{
 		Id:   proto.String(ag.id),
 		Addr: proto.String(ag.cfg.AddrStr),
 	}
 	if err := ag.codec.WriteMsg(msg, node.Conn); err != nil {
 		node.Conn.Close()
-		return err
+		return false, err
 	}
 	recvMsg, err := ag.codec.ReadMsg(node.Conn)
 	if err != nil {
 		// TODO(yifan) log.
 		node.Conn.Close()
-		return err
+		return false, err
 	}
 	reply, ok := recvMsg.(*message.JoinReply)
 	if !ok {
 		node.Conn.Close()
-		return ErrInvalidMessageType
+		return false, ErrInvalidMessageType
 	}
-	id, accept := reply.GetId(), reply.GetAccept()
+	id, accepted := reply.GetId(), reply.GetAccept()
 	node.Id = id
 
-	if accept {
+	if accepted {
 		ag.aView.Lock()
 		ag.pView.Lock()
 		defer ag.aView.Unlock()
@@ -92,8 +92,7 @@ func (ag *agent) join(node *node.Node) error {
 		ag.addNodeActiveView(node)
 		go ag.serveConn(node.Conn, node)
 	}
-
-	return nil
+	return accepted, nil
 }
 
 func (ag *agent) acceptJoin(node *node.Node) error {
