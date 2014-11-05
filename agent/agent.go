@@ -147,16 +147,6 @@ func (ag *agent) healLoop() {
 	for {
 		select {
 		case <-tick:
-			ag.aView.Lock()
-			ag.pView.Lock()
-			if ag.aView.Len() < ag.cfg.AViewSize {
-				nd := chooseRandomNode(ag.pView, "")
-				if nd != nil {
-					ag.neighbor(nd, message.Neighbor_Low)
-				}
-			}
-			ag.aView.Unlock()
-			ag.pView.Unlock()
 		}
 	}
 }
@@ -214,7 +204,6 @@ func (ag *agent) addNodeActiveView(node *node.Node) {
 		go ag.disconnect(n)
 		ag.aView.Remove(n.Id)
 		ag.addNodePassiveView(n)
-		return
 	}
 	ag.aView.Append(node.Id, node)
 }

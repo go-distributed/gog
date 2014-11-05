@@ -126,6 +126,8 @@ func (ag *agent) rejectJoin(node *node.Node) error {
 func (ag *agent) neighbor(node *node.Node, priority message.Neighbor_Priority) (bool, error) {
 	ag.aView.Unlock()
 	ag.pView.Unlock()
+	defer ag.aView.Lock()
+	defer ag.pView.Lock()
 
 	addr, err := net.ResolveTCPAddr(ag.cfg.Net, node.Addr)
 	if err != nil {
@@ -161,15 +163,20 @@ func (ag *agent) neighbor(node *node.Node, priority message.Neighbor_Priority) (
 		return false, ErrInvalidMessageType
 	}
 
+	accepted := reply.GetAccept()
+
 	ag.aView.Lock()
 	ag.pView.Lock()
-	if reply.GetAccept() {
+	if accepted {
 		ag.addNodeActiveView(node)
 		go ag.serveConn(node.Conn, node)
-		return true, nil
+	} else {
+		ag.addNodePassiveView(node)
 	}
-	ag.addNodePassiveView(node)
-	return true, nil
+	ag.aView.Unlock()
+	ag.pView.Unlock()
+
+	return accepted, nil
 }
 
 // userMessage() sends a user message to the node.
