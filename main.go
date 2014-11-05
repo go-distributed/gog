@@ -21,7 +21,7 @@ func main() {
 	go ag.Serve()
 
 	if config.Peers != nil {
-		if err := ag.Join(); err != nil {
+		if err := ag.Join(config.Peers); err != nil {
 			fmt.Println("No available peers")
 			//return
 		}

@@ -23,7 +23,7 @@ type Agent interface {
 	// incoming connections.
 	Serve() error
 	// Join joins the peers.
-	Join() error
+	Join(peerAddrs []string) error
 	// Leave causes the agent to leave the cluster.
 	Leave() error
 	// Broadcast broadcasts a message to the cluster.
@@ -258,14 +258,25 @@ func (ag *agent) replaceActiveNode(node *node.Node) {
 	ag.aView.Remove(node.Id)
 	node.Conn.Close()
 
-	// Note that this Will panic automatically if the passive view is empty.
 	nd := chooseRandomNode(ag.pView, "")
 	if nd == nil {
 		log.Warningf("No nodes in passive view\n")
-		if ag.aView.Len() == 0 {
-			log.Warningf("Lost all peers!\n")
+		if ag.aView.Len() > 0 {
+			// TODO aggressively shuffle.
+			return
 		}
-		// TODO trigger a shuffle.
+		log.Warningf("Lost all peers! Join again, bb\n")
+
+		ag.aView.Unlock()
+		ag.pView.Unlock()
+		err := ag.Join(ag.cfg.Peers)
+		ag.aView.Lock()
+		ag.pView.Lock()
+
+		if err != nil {
+			log.Warningf("No available peers, need a new list!")
+			return
+		}
 		return
 	}
 	ag.pView.Remove(nd.Id)
@@ -274,7 +285,18 @@ func (ag *agent) replaceActiveNode(node *node.Node) {
 	for ag.aView.Len() == 0 {
 		nd = chooseRandomNode(ag.pView, "")
 		if nd == nil {
-			log.Warningf("Lost all peers!\n")
+			log.Warningf("Lost all peers! Join again\n")
+
+			ag.aView.Unlock()
+			ag.pView.Unlock()
+			err := ag.Join(ag.cfg.Peers)
+			ag.aView.Lock()
+			ag.pView.Lock()
+
+			if err != nil {
+				log.Warningf("No available peers, need a new list!")
+				return
+			}
 			return
 		}
 		ag.pView.Remove(nd.Id)
@@ -379,6 +401,10 @@ func (ag *agent) handleDisconnect(msg *message.Disconnect) {
 	id := msg.GetId()
 
 	ag.aView.RLock()
+	if !ag.aView.Has(id) {
+		ag.aView.RUnlock()
+		return
+	}
 	nd := ag.aView.GetValueOf(id).(*node.Node)
 	ag.aView.RUnlock()
 	ag.replaceActiveNode(nd)
@@ -462,16 +488,16 @@ func (ag *agent) handleUserMessage(msg *message.UserMessage) {
 
 // Join joins the node to the cluster by contacting the nodes provied in the
 // list.
-func (ag *agent) Join() error {
-	for _, peer := range ag.cfg.Peers {
-		tcpAddr, err := net.ResolveTCPAddr(ag.cfg.Net, peer)
+func (ag *agent) Join(peerAddrs []string) error {
+	for _, peerAddr := range peerAddrs {
+		tcpAddr, err := net.ResolveTCPAddr(ag.cfg.Net, peerAddr)
 		if err != nil {
 			// TODO(yifan) log.
 			continue
 		}
-		node := &node.Node{Addr: peer}
+		node := &node.Node{Addr: peerAddr}
 
-		log.Infof("Trying to join %s...\n", peer)
+		log.Infof("Trying to join %s...\n", peerAddr)
 		conn, err := net.DialTCP(ag.cfg.Net, nil, tcpAddr)
 		if err != nil {
 			// TODO(yifan) log.
@@ -484,6 +510,7 @@ func (ag *agent) Join() error {
 			continue
 		}
 		// Successfully Joined.
+		log.Infof("Successfully join node %s\n", peerAddr)
 		return nil
 	}
 	return ErrNoAvailablePeers
