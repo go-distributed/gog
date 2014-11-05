@@ -349,7 +349,7 @@ func (ag *agent) handleForwardJoin(msg *message.ForwardJoin) {
 	defer ag.aView.Unlock()
 	defer ag.pView.Unlock()
 
-	if ttl == 0 || ag.aView.Len() == 1 { // TODO(yifan): Loose this?
+	if ttl == 0 || ag.aView.Len() <= 1 { // TODO(yifan): Loose this?
 		if ag.id != newNode.Id && !ag.aView.Has(newNode.Id) {
 			ag.neighbor(newNode, message.Neighbor_High)
 		}
