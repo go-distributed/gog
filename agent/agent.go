@@ -269,7 +269,7 @@ func (ag *agent) replaceActiveNode(node *node.Node) {
 
 		ag.aView.Unlock()
 		ag.pView.Unlock()
-		err := ag.Join(ag.cfg.Peers)
+		err := ag.Join(ag.cfg.ShufflePeers())
 		ag.aView.Lock()
 		ag.pView.Lock()
 
@@ -289,7 +289,7 @@ func (ag *agent) replaceActiveNode(node *node.Node) {
 
 			ag.aView.Unlock()
 			ag.pView.Unlock()
-			err := ag.Join(ag.cfg.Peers)
+			err := ag.Join(ag.cfg.ShufflePeers())
 			ag.aView.Lock()
 			ag.pView.Lock()
 

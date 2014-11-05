@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"flag"
 	"io"
+	"math/rand"
 	"net"
 	"os"
 	"strings"
@@ -113,4 +114,19 @@ func parsePeerFile(path string) ([]string, error) {
 		peers = append(peers, line[:len(line)-1])
 	}
 	return peers, nil
+}
+
+func (cfg *Config) ShufflePeers() []string {
+	shuffledPeers := make([]string, len(cfg.Peers))
+	if copy(shuffledPeers, cfg.Peers) != len(cfg.Peers) {
+		panic("Failed to copy")
+	}
+	for i := range shuffledPeers {
+		if i == 0 {
+			continue
+		}
+		swapIndex := rand.Intn(i)
+		shuffledPeers[i], shuffledPeers[swapIndex] = shuffledPeers[swapIndex], shuffledPeers[i]
+	}
+	return shuffledPeers
 }
