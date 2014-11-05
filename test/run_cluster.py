@@ -3,6 +3,7 @@
 # start a gossip cluster.
 # usage: ./run_cluster.py [number_of_hosts]
 
+import os
 import subprocess
 import sys
 import time
@@ -16,10 +17,22 @@ logdir = "./log"
 process = []
 
 def startNode(hostport):
-    logpath = logdir + "/" + hostport
-    logf = open(logpath, "w+")
+    stdoutdir = logdir + "/stdout"
+    stderrdir = logdir + "/stderr"
+
+    if not os.path.exists(stdoutdir):
+        os.makedirs(stdoutdir)
+    if not os.path.exists(stderrdir):
+        os.makedirs(stderrdir)
+
+    stdoutpath = stdoutdir + "/" + hostport
+    stderrpath = stderrdir + "/" + hostport
+
+    stdoutf = open(stdoutpath, "w+")
+    stderrf = open(stderrpath, "w+")
+
     p = subprocess.Popen([gogpath, "-addr", hostport, "-peer-file", filename],
-                         stdin=subprocess.PIPE, stdout=logf, stderr=logf)
+                         stdin=subprocess.PIPE, stdout=stdoutf, stderr=stderrf)
     process.append(p)
 
 def startNodes():
@@ -59,10 +72,17 @@ def main():
     # run node
     startNodes()
 
+    time.sleep(1)
+
+    print "listing..."
+    i = 0
     for p in process:
+        print "list %d" %i
+        i = i + 1
         p.stdin.write("list\n")
 
     time.sleep(1)
+    print "sending..."
     process[0].stdin.write("hello world\n")
 
     while True:

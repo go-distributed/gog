@@ -3,6 +3,7 @@ package log
 import (
 	"flag"
 	"fmt"
+	"os"
 )
 
 const (
@@ -15,37 +16,37 @@ const (
 var verbose int
 
 func init() {
-	flag.IntVar(&verbose, "v", verboseInfo, "The log veboseness")
+	flag.IntVar(&verbose, "v", verboseDebug, "The log veboseness")
 }
 
 func Errorf(format string, args ...interface{}) {
 	if verbose < verboseError {
 		return
 	}
-	fmt.Printf("[ERROR]: ")
-	fmt.Printf(format, args...)
+	fmt.Fprintf(os.Stderr, "[ERROR]: ")
+	fmt.Fprintf(os.Stderr, format, args...)
 }
 
 func Warningf(format string, args ...interface{}) {
 	if verbose < verboseWarning {
 		return
 	}
-	fmt.Printf("[WARNING]: ")
-	fmt.Printf(format, args...)
+	fmt.Fprintf(os.Stderr, "[WARNING]: ")
+	fmt.Fprintf(os.Stderr, format, args...)
 }
 
 func Infof(format string, args ...interface{}) {
 	if verbose < verboseInfo {
 		return
 	}
-	fmt.Printf("[INFO]: ")
-	fmt.Printf(format, args...)
+	fmt.Fprintf(os.Stderr, "[INFO]: ")
+	fmt.Fprintf(os.Stderr, format, args...)
 }
 
 func Debugf(format string, args ...interface{}) {
 	if verbose < verboseDebug {
 		return
 	}
-	fmt.Printf("[DEBUG]: ")
-	fmt.Printf(format, args...)
+	fmt.Fprintf(os.Stderr, "[DEBUG]: ")
+	fmt.Fprintf(os.Stderr, format, args...)
 }

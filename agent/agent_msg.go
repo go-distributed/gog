@@ -21,7 +21,6 @@ func (ag *agent) disconnect(node *node.Node) {
 	msg := &message.Disconnect{Id: proto.String(ag.id)}
 	ag.codec.WriteMsg(msg, node.Conn) // TODO record err log.
 	node.Conn.Close()
-	node.Conn = nil
 }
 
 // forwardJoin() sends a ForwardJoin message to the node. The message
@@ -128,19 +127,18 @@ func (ag *agent) neighbor(node *node.Node, priority message.Neighbor_Priority) (
 	ag.aView.Unlock()
 	ag.pView.Unlock()
 
-	if node.Conn == nil {
-		addr, err := net.ResolveTCPAddr(ag.cfg.Net, node.Addr)
-		if err != nil {
-			// TODO(yifan) log.
-			return false, err
-		}
-		conn, err := net.DialTCP(ag.cfg.Net, nil, addr)
-		if err != nil {
-			// TODO(yifan) log.
-			return false, err
-		}
-		node.Conn = conn
+	addr, err := net.ResolveTCPAddr(ag.cfg.Net, node.Addr)
+	if err != nil {
+		// TODO(yifan) log.
+		return false, err
 	}
+	conn, err := net.DialTCP(ag.cfg.Net, nil, addr)
+	if err != nil {
+		// TODO(yifan) log.
+		return false, err
+	}
+	node.Conn = conn
+
 	msg := &message.Neighbor{
 		Id:       proto.String(ag.id),
 		Addr:     proto.String(ag.cfg.AddrStr),

@@ -513,13 +513,13 @@ func (ag *agent) List() {
 	ag.pView.Lock()
 	defer ag.aView.Unlock()
 	defer ag.pView.Unlock()
-	log.Infof("AView:\n")
+	fmt.Printf("AView:\n")
 	for _, v := range ag.aView.Values() {
-		log.Infof("%v\n", v.(*node.Node))
+		fmt.Printf("%v\n", v.(*node.Node))
 	}
-	log.Infof("PView:\n")
+	fmt.Printf("PView:\n")
 	for _, v := range ag.pView.Values() {
-		log.Infof("%v\n", v.(*node.Node))
+		fmt.Printf("%v\n", v.(*node.Node))
 	}
 }
 
