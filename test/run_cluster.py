@@ -83,8 +83,17 @@ def main():
 
     time.sleep(1)
     print "sending..."
-    process[0].stdin.write("hello world\n")
+    process[0].stdin.write("hello\n")
 
+    time.sleep(10)
+    i = 0
+    for p in process:
+        print "list %d" %i
+        i = i + 1
+        p.stdin.write("list\n")
+
+    print "sending..."
+    process[0].stdin.write("world\n")
     while True:
         continue
 

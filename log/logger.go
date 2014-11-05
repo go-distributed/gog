@@ -16,7 +16,7 @@ const (
 var verbose int
 
 func init() {
-	flag.IntVar(&verbose, "v", verboseDebug, "The log veboseness")
+	flag.IntVar(&verbose, "v", verboseInfo, "The log veboseness")
 }
 
 func Errorf(format string, args ...interface{}) {

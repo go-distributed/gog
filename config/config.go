@@ -47,6 +47,8 @@ type Config struct {
 	MLife int
 	// Shuffle Duration in seconds.
 	ShuffleDuration int
+	// Heal Duration in seconds.
+	HealDuration int
 }
 
 func ParseConfig() (*Config, error) {
@@ -76,6 +78,7 @@ func ParseConfig() (*Config, error) {
 
 	flag.IntVar(&cfg.MLife, "msg_life", 500, "The default message life (milliconds)")
 	flag.IntVar(&cfg.ShuffleDuration, "shuffle_duration", 5, "The default shuffle duration (seconds)")
+	flag.IntVar(&cfg.HealDuration, "heal", 5, "The default heal duration (seconds)")
 
 	flag.Parse()
 

@@ -89,6 +89,7 @@ func (ag *agent) Serve() error {
 		log.Errorf("Serve() Cannot listen %v\n", err)
 		return err
 	}
+	go ag.healLoop()
 	go ag.shuffleLoop()
 	ag.ln = ln
 	ag.serve()
@@ -137,6 +138,25 @@ func (ag *agent) serveConn(conn *net.TCPConn, node *node.Node) {
 			log.Errorf("Agent.serveConn(): Unexpected message type: %T\n", t)
 			ag.replaceActiveNode(node)
 			return
+		}
+	}
+}
+
+func (ag *agent) healLoop() {
+	tick := time.Tick(time.Duration(ag.cfg.HealDuration) * time.Second)
+	for {
+		select {
+		case <-tick:
+			ag.aView.Lock()
+			ag.pView.Lock()
+			if ag.aView.Len() < ag.cfg.AViewSize {
+				nd := chooseRandomNode(ag.pView, "")
+				if nd != nil {
+					ag.neighbor(nd, message.Neighbor_Low)
+				}
+			}
+			ag.aView.Unlock()
+			ag.pView.Unlock()
 		}
 	}
 }
@@ -213,7 +233,7 @@ func (ag *agent) addNodePassiveView(node *node.Node) {
 	}
 	if ag.pView.Len() == ag.cfg.PViewSize {
 		n := chooseRandomNode(ag.pView, "")
-		ag.aView.Remove(n.Id)
+		ag.pView.Remove(n.Id)
 	}
 	ag.pView.Append(node.Id, node)
 }
