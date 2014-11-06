@@ -7,6 +7,7 @@ import os
 import subprocess
 import sys
 import time
+import random
 
 n = 10
 gogpath = "../gog"
@@ -54,8 +55,8 @@ def generateList(n):
     print "Ok.\n"
 
 def main():
-    if len(sys.argv) != 4:
-        print "usage:", sys.argv[0], "[gogpath]", "[number_of_hosts]", "[log_dir]"
+    if len(sys.argv) != 5:
+        print "usage:", sys.argv[0], "[gogpath]", "[number_of_hosts]", "[number_of_kill]", "[log_dir]"
         return
 
     global gopath
@@ -64,7 +65,8 @@ def main():
 
     gogpath = sys.argv[1]
     n = int(sys.argv[2])
-    logdir = sys.argv[3]
+    m = int(sys.argv[3])
+    logdir = sys.argv[4]
 
     # generate host list
     generateList(n)
@@ -85,17 +87,33 @@ def main():
     print "sending..."
     process[0].stdin.write("hello\n")
 
-    time.sleep(10)
+    time.sleep(5)
+
+    print "randomly killing %d nodes..." %m
+    for i in range (0, m):
+        index = random.randint(0, n-1)
+        p = process[index]
+        while p is None:
+            index = (index + 1) % n
+            p = process[index]
+        process[index].kill()
+        process[index] = None
+        
+    time.sleep(5)
     i = 0
     for p in process:
-        print "list %d" %i
+        if not p is None:
+            print "list %d" %i
+            p.stdin.write("list\n")
         i = i + 1
-        p.stdin.write("list\n")
 
-    print "sending..."
-    process[0].stdin.write("world\n")
-    while True:
-        continue
+    for p in process:
+        if not p is None:
+            print "sending..."
+            p.stdin.write("world\n")
+            break
+
+    time.sleep(10)
 
 if __name__ == "__main__":
     main()

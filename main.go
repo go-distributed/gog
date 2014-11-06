@@ -38,6 +38,7 @@ func main() {
 			ag.List()
 			continue
 		}
+		fmt.Println(bs)
 		ag.Broadcast([]byte(bs))
 	}
 }
