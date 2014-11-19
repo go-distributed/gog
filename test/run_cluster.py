@@ -16,6 +16,7 @@ genlist = "./genlist.py"
 logdir = "./log"
 delay = "0"
 droprate = "10"
+mlife = 0
 
 
 process = []
@@ -36,7 +37,7 @@ def startNode(hostport):
     stderrf = open(stderrpath, "w+")
 
     p = subprocess.Popen([gogpath, "-addr", hostport, "-peer-file", filename,
-                          "-delay", delay, "-droprate", droprate],
+                          "-delay", delay, "-droprate", droprate, "-msg_life", str(mlife)],
                          stdin=subprocess.PIPE, stdout=stdoutf, stderr=stderrf)
     process.append(p)
 
@@ -68,6 +69,7 @@ def main():
     global logdir
     global delay
     global droprate
+    global mlife
 
     gogpath = sys.argv[1]
     n = int(sys.argv[2])
@@ -75,6 +77,9 @@ def main():
     logdir = sys.argv[4]
     delay = sys.argv[5]
     droprate = sys.argv[6]
+    mlife = int(delay*2)
+    if mlife == 0:
+        mlife = 500
 
     # generate host list
     generateList(n)
@@ -82,7 +87,9 @@ def main():
     # run node
     startNodes()
 
-    time.sleep(1)
+    for i in range(0, 10):
+        time.sleep(1)
+        subprocess.call(["curl", "http://localhost:11000/query"])
 
     print "listing..."
     i = 0
@@ -93,12 +100,12 @@ def main():
 
     time.sleep(1)
     print "sending..."
-    subprocess.call(["curl", "http://localhost:8080/start"])
+    subprocess.call(["curl", "http://localhost:11000/start"])
     process[0].stdin.write("hello\n")
 
     for i in range(0, 10):
         time.sleep(1)
-        subprocess.call(["curl", "http://localhost:8080/query"])
+        subprocess.call(["curl", "http://localhost:11000/query"])
     return
 
     print "randomly killing %d nodes..." %m
@@ -110,6 +117,11 @@ def main():
             p = process[index]
         process[index].kill()
         process[index] = None
+
+    for i in range(0, 30):
+        time.sleep(1)
+        subprocess.call(["curl", "http://localhost:11000/query"])
+    return
         
     time.sleep(5)
     i = 0

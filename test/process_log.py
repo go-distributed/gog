@@ -28,14 +28,14 @@ def main():
         if not "hello" in line:
             print name
 
-    print "world"
-
-    for name in files:
-        f = open(name)
-        line = f.read()
-        f.close()
-        if not "hello" in line:
-            print name
+    #print "world"
+    #
+    #for name in files:
+    #    f = open(name)
+    #    line = f.read()
+    #    f.close()
+    #    if not "hello" in line:
+    #        print name
 
 if __name__ == "__main__":
     main()
