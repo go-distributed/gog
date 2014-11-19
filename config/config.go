@@ -70,7 +70,7 @@ func ParseConfig() (*Config, error) {
 	flag.IntVar(&cfg.PRWL, "prwl", 5, "The passive random walk length")
 	flag.IntVar(&cfg.SRWL, "srwl", 3, "The shuffle random walk length")
 
-	flag.IntVar(&cfg.MLife, "msg_life", 500, "The default message life (milliconds)")
+	flag.IntVar(&cfg.MLife, "msg_life", 5000, "The default message life (milliconds)")
 	flag.IntVar(&cfg.ShuffleDuration, "shuffle_duration", 5, "The default shuffle duration (seconds)")
 	flag.IntVar(&cfg.HealDuration, "heal", 5, "The default heal duration (seconds)")
 

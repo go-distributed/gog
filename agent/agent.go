@@ -489,15 +489,28 @@ func (ag *agent) handleShuffleReply(msg *message.ShuffleReply) {
 // handleUserMessage() handles user defined messages. It will forward the message
 // to the nodes in its active view.
 func (ag *agent) handleUserMessage(msg *message.UserMessage) {
+	// Test if the message is stale.
 	ms, err := time.ParseDuration("1ms")
 	if err != nil {
 		panic("failed to parse duration") // Shouldn't happen.
 	}
 	deadline := msg.GetTs() + ms.Nanoseconds()*int64(ag.cfg.MLife)
-	hash := hashMessage(msg.GetPayload())
-	if time.Now().UnixNano() >= deadline || ag.msgBuffer.Has(hash) {
+	now := time.Now().UnixNano()
+	if now >= deadline {
+		log.Debugf("Message is too old, deadline: %v, now %v\n", deadline, now)
 		return
 	}
+
+	// Test if the message has been already received.
+	hash := hashMessage(msg.GetPayload())
+	ag.msgBuffer.RLock()
+	if ag.msgBuffer.Has(hash) {
+		ag.msgBuffer.RUnlock()
+		log.Debugf("Message is alread received, hash: %v\n", hash)
+		return
+	}
+	ag.msgBuffer.RUnlock()
+
 	ag.msgBuffer.Lock()
 	ag.msgBuffer.Append(hash, msg)
 	ag.msgBuffer.Unlock()
