@@ -52,8 +52,11 @@ type agent struct {
 	ln *net.TCPListener
 	// The codec.
 	codec codec.Codec
-	// Message Buffer.
-	msgBuffer   *arraymap.ArrayMap
+	// Message buffer.
+	msgBuffer *arraymap.ArrayMap
+	// FaildMessage buffer.
+	failmsgBuffer *arraymap.ArrayMap
+	// The user message callback.
 	msgCallBack func([]byte)
 }
 
@@ -72,12 +75,13 @@ func NewAgent(cfg *config.Config) Agent {
 	codec.Register(&message.ShuffleReply{})
 
 	return &agent{
-		id:        cfg.AddrStr,
-		cfg:       cfg,
-		codec:     codec,
-		aView:     arraymap.NewArrayMap(),
-		pView:     arraymap.NewArrayMap(),
-		msgBuffer: arraymap.NewArrayMap(),
+		id:            cfg.AddrStr,
+		cfg:           cfg,
+		codec:         codec,
+		aView:         arraymap.NewArrayMap(),
+		pView:         arraymap.NewArrayMap(),
+		msgBuffer:     arraymap.NewArrayMap(),
+		failmsgBuffer: arraymap.NewArrayMap(),
 	}
 }
 
@@ -302,6 +306,30 @@ func (ag *agent) replaceActiveNode(node *node.Node) {
 		ag.pView.Remove(nd.Id)
 		ag.neighbor(nd, message.Neighbor_High)
 	}
+	ag.resendFailedMessages()
+}
+
+// Resend failed messages if any.
+// NOTE: The view locks should already be held when invoking this function.
+func (ag *agent) resendFailedMessages() {
+
+	// Should not use defer unlock to prevent deadlock,
+	// because in userMessage() we will probably lock again.
+	ag.failmsgBuffer.Lock()
+	values := ag.failmsgBuffer.Values()
+	ag.failmsgBuffer.RemoveAll()
+	ag.failmsgBuffer.Unlock()
+
+	// We have already lock the view, so do not need locks here.
+	for _, v := range values {
+		log.Debugf("Resending message %v\n", v)
+		msg := v.(*message.UserMessage)
+		for _, vv := range ag.aView.Values() {
+			nd := vv.(*node.Node)
+			go ag.userMessage(nd, msg)
+		}
+	}
+	return
 }
 
 // handleJoin() handles Join message. If it accepts the request, it will add

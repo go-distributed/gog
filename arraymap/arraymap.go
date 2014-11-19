@@ -72,24 +72,32 @@ func (a *ArrayMap) Remove(key interface{}) {
 	}
 }
 
+func (a *ArrayMap) RemoveAll() {
+	for k := range a.positions {
+		delete(a.positions, k)
+	}
+	a.keys = a.keys[:0]
+	a.values = a.values[:0]
+}
+
 func (a *ArrayMap) Lock() {
 	a.rwl.Lock()
-	return 
+	return
 }
 
 func (a *ArrayMap) Unlock() {
 	a.rwl.Unlock()
-	return 
+	return
 }
 
 func (a *ArrayMap) RLock() {
 	a.rwl.RLock()
-	return 
+	return
 }
 
 func (a *ArrayMap) RUnlock() {
 	a.rwl.RUnlock()
-	return 
+	return
 }
 
 func (a *ArrayMap) Values() []interface{} {

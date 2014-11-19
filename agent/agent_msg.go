@@ -181,6 +181,14 @@ func (ag *agent) neighbor(node *node.Node, priority message.Neighbor_Priority) (
 // userMessage() sends a user message to the node.
 func (ag *agent) userMessage(node *node.Node, msg proto.Message) {
 	if err := ag.codec.WriteMsg(msg, node.Conn); err != nil {
+		// Record this message, so we can resend it later.
+		umsg := msg.(*message.UserMessage)
+		hash := hashMessage(umsg.GetPayload())
+
+		ag.failmsgBuffer.Lock()
+		ag.failmsgBuffer.Append(hash, msg)
+		ag.failmsgBuffer.Unlock()
+
 		node.Conn.Close()
 	}
 }
