@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"math/rand" // TODO(yifan): Need to change this??
 	"net"
+	"net/http"
+	"strings"
 	"time"
 
 	"github.com/go-distributed/gog/arraymap"
@@ -16,6 +18,8 @@ import (
 	"code.google.com/p/gogoprotobuf/proto"
 	log "github.com/go-distributed/gog/log" // DEBUG
 )
+
+var measureServer = "http://localhost:11000"
 
 // Agent describes the interface of an agent.
 type Agent interface {
@@ -95,6 +99,7 @@ func (ag *agent) Serve() error {
 	}
 	go ag.healLoop()
 	go ag.shuffleLoop()
+	go ag.reportLoop()
 	ag.ln = ln
 	ag.serve()
 	return nil
@@ -185,6 +190,21 @@ func (ag *agent) shuffleLoop() {
 			ag.aView.RUnlock()
 			ag.pView.RUnlock()
 			go ag.shuffle(node, list)
+		}
+	}
+}
+
+func (ag *agent) reportLoop() {
+	tick := time.Tick(time.Second)
+	for {
+		select {
+		case <-tick:
+			s := fmt.Sprintf("%d:%d:%s", ag.aView.Len(), ag.pView.Len(), ag.id)
+			resp, err := http.Post(measureServer+"/view", "html", strings.NewReader(s))
+			if err != nil {
+				fmt.Println(err)
+			}
+			resp.Body.Close()
 		}
 	}
 }
