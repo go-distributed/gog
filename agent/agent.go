@@ -63,7 +63,7 @@ type agent struct {
 // NewAgent creates a new agent.
 func NewAgent(cfg *config.Config) Agent {
 	// Create a codec and register messages.
-	codec := codec.NewProtobufCodec()
+	codec := codec.NewProtobufCodec(cfg)
 	codec.Register(&message.UserMessage{})
 	codec.Register(&message.Join{})
 	codec.Register(&message.JoinReply{})

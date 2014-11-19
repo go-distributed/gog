@@ -5,12 +5,16 @@ import (
 	"encoding/binary"
 	"errors"
 	"io"
+	"math/rand"
 	"net"
 	"reflect"
+	"time"
 
 	"code.google.com/p/gogoprotobuf/proto"
 
+	"github.com/go-distributed/gog/config"
 	log "github.com/go-distributed/gog/log" // DEBUG
+	"github.com/go-distributed/gog/message"
 )
 
 const (
@@ -48,13 +52,19 @@ type ProtobufCodec struct {
 	// messageIndices is a map from message types
 	// to message indices.
 	messageIndices map[reflect.Type]uint8
+	// Network Delay Max in milliseconds.
+	networkDelayMax int
+	// Network Drop Rate (0-100)
+	networkDropRate int
 }
 
 // NewProtobufCodec creates and returns a ProtobufCodec.
-func NewProtobufCodec() *ProtobufCodec {
+func NewProtobufCodec(cfg *config.Config) *ProtobufCodec {
 	return &ProtobufCodec{
 		registeredMessages: make(map[uint8]reflect.Type),
 		messageIndices:     make(map[reflect.Type]uint8),
+		networkDelayMax:    cfg.NetworkDelayMax,
+		networkDropRate:    cfg.NetworkDropRate,
 	}
 }
 
@@ -72,6 +82,19 @@ func (pc *ProtobufCodec) Register(msg proto.Message) {
 
 // WriteMsg encodes a message to bytes and writes it to the io.Writer.
 func (pc *ProtobufCodec) WriteMsg(msg proto.Message, w io.Writer) error {
+	if (reflect.TypeOf(msg) == reflect.TypeOf(&message.UserMessage{})) {
+		if rand.Intn(100) < pc.networkDropRate {
+			log.Debugf("Dropped message, Send:%v, to:%v\n", msg, w.(*net.TCPConn).RemoteAddr())
+			return nil
+		}
+	}
+
+	if (pc.networkDelayMax > 0) {
+		delay := time.Duration(rand.Intn(pc.networkDelayMax+1)) * time.Millisecond
+		log.Debugf("Delay for %v\n", delay)
+		time.Sleep(delay)
+	}
+
 	log.Debugf("Send:%v, to:%v\n", msg, w.(*net.TCPConn).RemoteAddr())
 	index, existed := pc.messageIndices[reflect.TypeOf(msg)]
 	if !existed {
