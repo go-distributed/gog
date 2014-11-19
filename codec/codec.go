@@ -85,7 +85,7 @@ func (pc *ProtobufCodec) WriteMsg(msg proto.Message, w io.Writer) error {
 	if (reflect.TypeOf(msg) == reflect.TypeOf(&message.UserMessage{})) {
 		if rand.Intn(100) < pc.networkDropRate {
 			log.Debugf("Dropped message, Send:%v, to:%v\n", msg, w.(*net.TCPConn).RemoteAddr())
-			return nil
+			return errors.New("Drop message")
 		}
 	}
 
