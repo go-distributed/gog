@@ -89,8 +89,8 @@ func (pc *ProtobufCodec) WriteMsg(msg proto.Message, w io.Writer) error {
 		}
 	}
 
-	if (pc.networkDelayMax > 0) {
-		delay := time.Duration(rand.Intn(pc.networkDelayMax+1)) * time.Millisecond
+	if pc.networkDelayMax > 0 {
+		delay := time.Duration(pc.networkDelayMax * time.Millisecond)
 		log.Debugf("Delay for %v\n", delay)
 		time.Sleep(delay)
 	}

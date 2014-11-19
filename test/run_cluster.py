@@ -93,9 +93,13 @@ def main():
 
     time.sleep(1)
     print "sending..."
+    subprocess.call(["curl", "http://localhost:8080/start"])
     process[0].stdin.write("hello\n")
 
-    time.sleep(5)
+    for i in range(0, 10):
+        time.sleep(1)
+        subprocess.call(["curl", "http://localhost:8080/query"])
+    return
 
     print "randomly killing %d nodes..." %m
     for i in range (0, m):

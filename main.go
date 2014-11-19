@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"net/http"
 	"os"
 
 	"github.com/go-distributed/gog/agent"
@@ -43,6 +44,12 @@ func main() {
 	}
 }
 
+var measureServer string = "http://localhost:8080"
 func msgCallBack(msg []byte) {
-	fmt.Println(string(msg))
+	resp, err := http.Get(measureServer + "/received")
+	if err != nil {
+		fmt.Println("Failed to send received")
+		return
+	}
+	defer resp.Body.Close()
 }
