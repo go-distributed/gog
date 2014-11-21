@@ -12,6 +12,7 @@ n = 10
 filename = "peerlist.txt"
 genlist = "./genlist.py"
 logdir = "./log"
+reportscript = "$PWD/query_handler.sh"
 
 process = []
 
@@ -49,7 +50,8 @@ def startNode(hostport, rpcaddr):
     stdoutf = open(stdoutpath, "w+")
     stderrf = open(stderrpath, "w+")
 
-    p = subprocess.Popen(["serf", "agent", "-node", hostport, "-bind", hostport, "-rpc-addr", rpcaddr],
+    p = subprocess.Popen(["serf", "agent", "-event-handler", "user="+reportscript,
+                          "-node", hostport, "-bind", hostport, "-rpc-addr", rpcaddr],
                          stdin=subprocess.PIPE, stdout=stdoutf, stderr=stderrf)
     process.append(p)
 
@@ -98,11 +100,14 @@ def main():
     # list member
     subprocess.call(["serf", "members", "-rpc-addr", "localhost:8001"])
 
+    subprocess.call(["curl", "http://localhost:11000/start"])
     # send a message
     subprocess.call(["serf", "event", "-rpc-addr", "localhost:8001", "hello", "hello"])
-    
-    while True:
-        continue
 
+    for i in range(0, 20):
+        time.sleep(0.5)
+        subprocess.call(["curl", "http://localhost:11000/query"])
+    return
+    
 if __name__ == "__main__":
     main()

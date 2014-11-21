@@ -202,7 +202,7 @@ func (ag *agent) reportLoop() {
 			s := fmt.Sprintf("%d:%d:%s", ag.aView.Len(), ag.pView.Len(), ag.id)
 			resp, err := http.Post(measureServer+"/view", "html", strings.NewReader(s))
 			if err != nil {
-				fmt.Println(err)
+				log.Errorf("%v\n", err)
 			}
 			resp.Body.Close()
 		}

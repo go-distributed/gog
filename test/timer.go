@@ -23,9 +23,9 @@ var vmu sync.Mutex
 var aViewCnt = make(map[string]int)
 var pViewCnt = make(map[string]int)
 
-func init() {
-	flag.StringVar(&hostport, "-hostport", ":11000", "The server's address")
-}
+var testSerf bool
+
+var times = make([]time.Duration, 10)
 
 func handleStart(w http.ResponseWriter, r *http.Request) {
 	mu.Lock()
@@ -54,10 +54,15 @@ func handleReceived(w http.ResponseWriter, r *http.Request) {
 	defer mu.Unlock()
 	receivedNum++
 	elaspedTime = time.Now().Sub(startTime)
+	if receivedNum%100 == 0 {
+		times[receivedNum/100] = elaspedTime
+	}
 }
 
 func handleQuery(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Received: %v, time: %v\n", receivedNum, elaspedTime)
+	for i := range times {
+		fmt.Fprintf(w, "Received: %d, time: %v\n", i*100, times[i])
+	}
 
 	vmu.Lock()
 	defer vmu.Unlock()
@@ -114,7 +119,14 @@ func computeView(view map[string]int) (float64, float64) {
 	return avg, std
 }
 
+func init() {
+	flag.StringVar(&hostport, "hostport", ":11000", "The server's address")
+	flag.BoolVar(&testSerf, "testserf", false, "If testing serf")
+}
+
 func main() {
+	flag.Parse()
+
 	fmt.Println("Start server...")
 	http.HandleFunc("/start", handleStart)
 	http.HandleFunc("/received", handleReceived)

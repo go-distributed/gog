@@ -37,7 +37,7 @@ def startNode(hostport):
     stderrf = open(stderrpath, "w+")
 
     p = subprocess.Popen([gogpath, "-addr", hostport, "-peer-file", filename,
-                          "-delay", delay, "-droprate", droprate],
+                          "-delay", delay, "-droprate", droprate, "-msg_life", "10000"],
                          stdin=subprocess.PIPE, stdout=stdoutf, stderr=stderrf)
     process.append(p)
 
@@ -104,6 +104,9 @@ def main():
         process[index].kill()
         process[index] = None
 
+    #for i in range(0, 5):
+    #    time.sleep(1)
+    #    subprocess.call(["curl", "http://localhost:11000/query"])
     for p in process:
         if not p is None:
             print "sending..."
@@ -111,7 +114,7 @@ def main():
             p.stdin.write("hello\n")
             break
 
-    for i in range(0, 10):
+    for i in range(0, 20):
         time.sleep(0.5)
         subprocess.call(["curl", "http://localhost:11000/query"])
     return

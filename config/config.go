@@ -76,7 +76,7 @@ func ParseConfig() (*Config, error) {
 
 	flag.IntVar(&cfg.MLife, "msg_life", 5000, "The default message life (milliconds)")
 	flag.IntVar(&cfg.ShuffleDuration, "shuffle_duration", 5, "The default shuffle duration (seconds)")
-	flag.IntVar(&cfg.HealDuration, "heal", 5, "The default heal duration (seconds)")
+	flag.IntVar(&cfg.HealDuration, "heal", 1, "The default heal duration (seconds)")
 	flag.IntVar(&cfg.NetworkDelayMax, "delay", 0, "The network delay for simulation (milliseconds)")
 	flag.IntVar(&cfg.NetworkDropRate, "droprate", 0, "The network drop rate")
 
