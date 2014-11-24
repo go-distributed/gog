@@ -25,7 +25,7 @@ var pViewCnt = make(map[string]int)
 
 var testSerf bool
 
-var times = make([]time.Duration, 10)
+var times = make([]time.Duration, 21)
 
 func handleStart(w http.ResponseWriter, r *http.Request) {
 	mu.Lock()
@@ -54,14 +54,31 @@ func handleReceived(w http.ResponseWriter, r *http.Request) {
 	defer mu.Unlock()
 	receivedNum++
 	elaspedTime = time.Now().Sub(startTime)
-	if receivedNum%100 == 0 {
-		times[receivedNum/100] = elaspedTime
+	if !testSerf {
+		if receivedNum%100 == 0 {
+			times[receivedNum/100] = elaspedTime
+		}
+	} else {
+		if receivedNum == 1 {
+			startTime = time.Now()
+		}
+		elaspedTime = time.Now().Sub(startTime)
+		if receivedNum%20 == 0 {
+			times[receivedNum/20] = elaspedTime
+		}
 	}
 }
 
 func handleQuery(w http.ResponseWriter, r *http.Request) {
-	for i := range times {
-		fmt.Fprintf(w, "Received: %d, time: %v\n", i*100, times[i])
+	if !testSerf {
+		for i := range times {
+			fmt.Fprintf(w, "Received: %d, time: %v\n", i*100, times[i])
+		}
+	} else {
+		for i := range times {
+			fmt.Fprintf(w, "Received: %d, time: %v\n", i*20, times[i])
+		}
+		fmt.Fprintf(w, "total received: %d\n", receivedNum)
 	}
 
 	vmu.Lock()
