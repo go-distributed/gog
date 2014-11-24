@@ -49,6 +49,8 @@ type Config struct {
 	NetworkDelayMax int
 	// Network Drop Rate (0-1)
 	NetworkDropRate int
+	// Measure Server.
+	MeasureServer string
 }
 
 func ParseConfig() (*Config, error) {
@@ -79,6 +81,7 @@ func ParseConfig() (*Config, error) {
 	flag.IntVar(&cfg.HealDuration, "heal", 1, "The default heal duration (seconds)")
 	flag.IntVar(&cfg.NetworkDelayMax, "delay", 0, "The network delay for simulation (milliseconds)")
 	flag.IntVar(&cfg.NetworkDropRate, "droprate", 0, "The network drop rate")
+	flag.StringVar(&cfg.MeasureServer, "measure_server", "http://localhost:11000", "The measure server")
 
 	flag.Parse()
 

@@ -19,8 +19,6 @@ import (
 	log "github.com/go-distributed/gog/log" // DEBUG
 )
 
-var measureServer = "http://localhost:11000"
-
 // Agent describes the interface of an agent.
 type Agent interface {
 	// Serve starts a standalone agent, waiting for
@@ -200,7 +198,7 @@ func (ag *agent) reportLoop() {
 		select {
 		case <-tick:
 			s := fmt.Sprintf("%d:%d:%s", ag.aView.Len(), ag.pView.Len(), ag.id)
-			resp, err := http.Post(measureServer+"/view", "html", strings.NewReader(s))
+			resp, err := http.Post(ag.cfg.MeasureServer+"/view", "html", strings.NewReader(s))
 			if err != nil {
 				log.Errorf("%v\n", err)
 			}

@@ -10,19 +10,22 @@ import (
 	"github.com/go-distributed/gog/config"
 )
 
+var cfg *config.Config
+var err error
+
 func main() {
-	config, err := config.ParseConfig()
+	cfg, err = config.ParseConfig()
 	if err != nil {
 		fmt.Println("Failed to parse configuration", err)
 		return
 	}
-	ag := agent.NewAgent(config)
+	ag := agent.NewAgent(cfg)
 	ag.RegisterMessageHandler(msgCallBack)
-	fmt.Printf("serving at %v...\n", config.AddrStr)
+	fmt.Printf("serving at %v...\n", cfg.AddrStr)
 	go ag.Serve()
 
-	if config.Peers != nil {
-		if err := ag.Join(config.Peers); err != nil {
+	if cfg.Peers != nil {
+		if err := ag.Join(cfg.Peers); err != nil {
 			fmt.Println("No available peers")
 			//return
 		}
@@ -44,12 +47,11 @@ func main() {
 	}
 }
 
-var measureServer string = "http://localhost:11000"
 func msgCallBack(msg []byte) {
 	fmt.Println(string(msg))
-	resp, err := http.Get(measureServer + "/received")
+	resp, err := http.Get(cfg.MeasureServer + "/received")
 	if err != nil {
-		fmt.Println("Failed to send received")
+		fmt.Println("Failed to send received", err)
 		return
 	}
 	defer resp.Body.Close()
