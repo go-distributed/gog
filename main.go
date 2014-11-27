@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/go-distributed/gog/config"
 	"github.com/go-distributed/gog/log"
 	"github.com/go-distributed/gog/rest"

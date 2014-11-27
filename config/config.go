@@ -1,9 +1,9 @@
 package config
 
 import (
-	"bufio"
+	"encoding/json"
 	"flag"
-	"io"
+	"io/ioutil"
 	"math/rand"
 	"net"
 	"os"
@@ -105,22 +105,19 @@ func ParseConfig() (*Config, error) {
 }
 
 func parsePeerFile(path string) ([]string, error) {
-	peers := make([]string, 0)
+	var peers []string
 	f, err := os.Open(path)
 	if err != nil {
 		return nil, err
 	}
-	br := bufio.NewReader(f)
+	defer f.Close()
 
-	for {
-		line, err := br.ReadString('\n')
-		if err != nil {
-			if err == io.EOF {
-				break
-			}
-			return nil, err
-		}
-		peers = append(peers, line[:len(line)-1])
+	b, err := ioutil.ReadAll(f)
+	if err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal(b, &peers); err != nil {
+		return nil, err
 	}
 	return peers, nil
 }

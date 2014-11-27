@@ -2,6 +2,7 @@ package rest
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/go-distributed/gog/agent"
@@ -61,16 +62,36 @@ func (rh *RESTServer) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	fmt.Fprintf(w, string(b))
+	return
 }
 
 // Join joins the agent to a cluster.
 func (rh *RESTServer) Join(w http.ResponseWriter, r *http.Request) {
-	log.Infof("join")
+	b, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	log.Infof("join, %v\n", string(b))
 }
 
 // Broadcast broadcasts the message to the cluster
 func (rh *RESTServer) Broadcast(w http.ResponseWriter, r *http.Request) {
-	log.Infof("broadcast")
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	msg := r.Form.Get("message")
+	if msg != "" {
+		log.Infof("Broadcasting: %s\n", msg)
+		err := rh.ag.Broadcast([]byte(msg))
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
+	return
 }
 
 // Config get/set the curreng configuration.
