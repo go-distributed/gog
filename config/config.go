@@ -45,6 +45,8 @@ type Config struct {
 	ShuffleDuration int
 	// Heal Duration in seconds.
 	HealDuration int
+	// The REST server address.
+	RESTAddrStr string
 }
 
 func ParseConfig() (*Config, error) {
@@ -73,6 +75,7 @@ func ParseConfig() (*Config, error) {
 	flag.IntVar(&cfg.MLife, "msg_life", 5000, "The default message life (milliconds)")
 	flag.IntVar(&cfg.ShuffleDuration, "shuffle_duration", 5, "The default shuffle duration (seconds)")
 	flag.IntVar(&cfg.HealDuration, "heal", 5, "The default heal duration (seconds)")
+	flag.StringVar(&cfg.RESTAddrStr, "rest", "localhost:8425", "The address of the REST server")
 
 	flag.Parse()
 
@@ -92,6 +95,12 @@ func ParseConfig() (*Config, error) {
 		return nil, err
 	}
 	cfg.LocalTCPAddr = tcpAddr
+
+	_, err = net.ResolveTCPAddr(cfg.Net, cfg.RESTAddrStr)
+	if err != nil {
+		return nil, err
+	}
+
 	return cfg, nil
 }
 

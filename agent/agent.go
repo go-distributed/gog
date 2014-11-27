@@ -3,7 +3,7 @@ package agent
 import (
 	"crypto/sha1"
 	"fmt"
-	"math/rand" // TODO(yifan): Need to change this??
+	"math/rand"
 	"net"
 	"time"
 
@@ -14,8 +14,11 @@ import (
 	"github.com/go-distributed/gog/node"
 
 	"code.google.com/p/gogoprotobuf/proto"
-	log "github.com/go-distributed/gog/log" // DEBUG
+	log "github.com/go-distributed/gog/log"
 )
+
+// MessageHandler is the message handler.
+type MessageHandler func([]byte)
 
 // Agent describes the interface of an agent.
 type Agent interface {
@@ -29,11 +32,7 @@ type Agent interface {
 	// Broadcast broadcasts a message to the cluster.
 	Broadcast(msg []byte) error
 	// RegisterMessageHandler registers a user provided callback.
-	RegisterMessageHandler(cb func([]byte))
-	// Count does a broadcast and returns a channel of
-	// nodes, which can be used to compute the broadcast
-	// delay.
-	Count(addr string) (chan *node.Node, error)
+	RegisterMessageHandler(mh MessageHandler)
 	// List prints the infomation in two views.
 	List()
 }
@@ -57,7 +56,7 @@ type agent struct {
 	// FaildMessage buffer.
 	failmsgBuffer *arraymap.ArrayMap
 	// The user message callback.
-	msgCallBack func([]byte)
+	msgHandler MessageHandler
 }
 
 // NewAgent creates a new agent.
@@ -515,8 +514,8 @@ func (ag *agent) handleUserMessage(msg *message.UserMessage) {
 	ag.msgBuffer.Append(hash, msg)
 	ag.msgBuffer.Unlock()
 
-	// Invoke user's callback.
-	go ag.msgCallBack(msg.GetPayload())
+	// Invoke user's message handler.
+	go ag.msgHandler(msg.GetPayload())
 
 	ag.aView.Lock()
 	defer ag.aView.Unlock()
@@ -585,15 +584,8 @@ func (ag *agent) Broadcast(payload []byte) error {
 
 // RegisterMessageHandler registers a user provided message callback
 // to handle messages.
-func (ag *agent) RegisterMessageHandler(cb func([]byte)) {
-	ag.msgCallBack = cb
-}
-
-// Count does a broadcast and returns a channel of
-// nodes, which can be used to compute the broadcast
-// delay.
-func (ag *agent) Count(addr string) (chan *node.Node, error) {
-	return nil, fmt.Errorf("Fill me in")
+func (ag *agent) RegisterMessageHandler(mh MessageHandler) {
+	ag.msgHandler = mh
 }
 
 func (ag *agent) List() {
