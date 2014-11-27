@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/go-distributed/gog/config"
 	"github.com/go-distributed/gog/log"
 	"github.com/go-distributed/gog/rest"
@@ -16,5 +15,8 @@ func main() {
 
 	srv := rest.NewServer(cfg)
 	log.Infof("Starting server...\n")
-	srv.ListenAndServe()
+	if err := srv.ListenAndServe(); err != nil {
+		log.Errorf("Failed to start server: %v\n", err)
+	}
+	return
 }

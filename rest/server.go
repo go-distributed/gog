@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -17,6 +18,10 @@ const (
 	configURL    = "/api/config"
 )
 
+var (
+	errInvalidMethod = errors.New("server: Invalid method")
+)
+
 // RESTServer handles RESTful requests for gog agent.
 type RESTServer struct {
 	ag  agent.Agent
@@ -24,8 +29,15 @@ type RESTServer struct {
 }
 
 // NewServer creates a new RESTful server for gog agent.
+// It will also starts the agent server.
 func NewServer(cfg *config.Config) *http.Server {
 	ag := agent.NewAgent(cfg)
+	go func() {
+		if err := ag.Serve(); err != nil {
+			log.Fatalf("server.NewServer(): Agent failed to serve: %v\n", err)
+		}
+	}()
+
 	handler := NewRESTServer(ag)
 
 	// Register a user message handler.
@@ -67,6 +79,27 @@ func (rh *RESTServer) List(w http.ResponseWriter, r *http.Request) {
 
 // Join joins the agent to a cluster.
 func (rh *RESTServer) Join(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, errInvalidMethod.Error(), http.StatusMethodNotAllowed)
+		return
+	}
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	peer := r.Form.Get("peer")
+
+	// Join a single peer
+	if peer != "" {
+		log.Infof("Joining: %s\n", peer)
+		if err := rh.ag.Join(peer); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		return
+	}
+
 	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -85,8 +118,7 @@ func (rh *RESTServer) Broadcast(w http.ResponseWriter, r *http.Request) {
 	msg := r.Form.Get("message")
 	if msg != "" {
 		log.Infof("Broadcasting: %s\n", msg)
-		err := rh.ag.Broadcast([]byte(msg))
-		if err != nil {
+		if err := rh.ag.Broadcast([]byte(msg)); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -94,7 +126,7 @@ func (rh *RESTServer) Broadcast(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-// Config get/set the curreng configuration.
+// Config get/set the current configuration.
 func (rh *RESTServer) Config(w http.ResponseWriter, r *http.Request) {
 	log.Infof("config")
 }

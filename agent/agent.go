@@ -27,7 +27,7 @@ type Agent interface {
 	// incoming connections.
 	Serve() error
 	// Join joins the peers.
-	Join(peerAddrs []string) error
+	Join(peerAddrs ...string) error
 	// Leave causes the agent to leave the cluster.
 	Leave() error
 	// Broadcast broadcasts a message to the cluster.
@@ -273,7 +273,7 @@ func (ag *agent) replaceActiveNode(node *node.Node) {
 
 		ag.aView.Unlock()
 		ag.pView.Unlock()
-		err := ag.Join(ag.cfg.ShufflePeers())
+		err := ag.Join(ag.cfg.ShufflePeers()...)
 		ag.aView.Lock()
 		ag.pView.Lock()
 
@@ -293,7 +293,7 @@ func (ag *agent) replaceActiveNode(node *node.Node) {
 
 			ag.aView.Unlock()
 			ag.pView.Unlock()
-			err := ag.Join(ag.cfg.ShufflePeers())
+			err := ag.Join(ag.cfg.ShufflePeers()...)
 			ag.aView.Lock()
 			ag.pView.Lock()
 
@@ -529,7 +529,7 @@ func (ag *agent) handleUserMessage(msg *message.UserMessage) {
 
 // Join joins the node to the cluster by contacting the nodes provied in the
 // list.
-func (ag *agent) Join(peerAddrs []string) error {
+func (ag *agent) Join(peerAddrs ...string) error {
 	for _, peerAddr := range peerAddrs {
 		tcpAddr, err := net.ResolveTCPAddr(ag.cfg.Net, peerAddr)
 		if err != nil {
@@ -538,10 +538,10 @@ func (ag *agent) Join(peerAddrs []string) error {
 		}
 		node := &node.Node{Addr: peerAddr}
 
-		log.Infof("Trying to join %s...\n", peerAddr)
+		log.Infof("Agent.Join(): Trying to join %s...\n", peerAddr)
 		conn, err := net.DialTCP(ag.cfg.Net, nil, tcpAddr)
 		if err != nil {
-			// TODO(yifan) log.
+			log.Errorf("Agent.Join(): Failed to dial %s: %v\n", peerAddr, err)
 			continue
 		}
 		node.Conn = conn
