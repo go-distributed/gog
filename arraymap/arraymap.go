@@ -4,13 +4,11 @@ import (
 	"sync"
 )
 
-// TODO make it an interface.
-
 type ArrayMap struct {
-	positions map[interface{}]int
-	keys      []interface{}
-	values    []interface{}
-	rwl       sync.RWMutex
+	positions map[interface{}]int `json:"-"`
+	keys      []interface{}       `json:"-"`
+	values    []interface{}       `json:"values"`
+	rwl       sync.RWMutex        `json:"-"`
 }
 
 func NewArrayMap() *ArrayMap {

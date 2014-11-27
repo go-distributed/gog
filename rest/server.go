@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/go-distributed/gog/agent"
@@ -54,7 +55,12 @@ func (rh *RESTServer) RegisterAPI(mux *http.ServeMux) {
 
 // List lists the views
 func (rh *RESTServer) List(w http.ResponseWriter, r *http.Request) {
-	log.Infof("list")
+	b, err := rh.ag.List()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	fmt.Fprintf(w, string(b))
 }
 
 // Join joins the agent to a cluster.

@@ -2,6 +2,7 @@ package agent
 
 import (
 	"crypto/sha1"
+	"encoding/json"
 	"fmt"
 	"math/rand"
 	"net"
@@ -34,7 +35,7 @@ type Agent interface {
 	// RegisterMessageHandler registers a user provided callback.
 	RegisterMessageHandler(mh MessageHandler)
 	// List prints the infomation in two views.
-	List()
+	List() ([]byte, error)
 }
 
 // agent implements the Agent interface.
@@ -588,19 +589,33 @@ func (ag *agent) RegisterMessageHandler(mh MessageHandler) {
 	ag.msgHandler = mh
 }
 
-func (ag *agent) List() {
+// List() lists the active view and passive view.
+func (ag *agent) List() ([]byte, error) {
 	ag.aView.Lock()
 	ag.pView.Lock()
 	defer ag.aView.Unlock()
 	defer ag.pView.Unlock()
-	fmt.Printf("AView:\n")
+
+	log.Debugf("AView:\n")
 	for _, v := range ag.aView.Values() {
-		fmt.Printf("%v\n", v.(*node.Node))
+		log.Debugf("%v\n", v.(*node.Node))
 	}
-	fmt.Printf("PView:\n")
+	log.Debugf("PView:\n")
 	for _, v := range ag.pView.Values() {
-		fmt.Printf("%v\n", v.(*node.Node))
+		log.Debugf("%v\n", v.(*node.Node))
 	}
+
+	ba, err := json.Marshal(ag.aView)
+	if err != nil {
+		log.Errorf("Agent.List(): Failed to mashal: %v\n", err)
+		return nil, err
+	}
+	bb, err := json.Marshal(ag.pView)
+	if err != nil {
+		log.Errorf("Agent.List(): Failed to mashal: %v\n", err)
+		return nil, err
+	}
+	return append(ba, bb...), nil
 }
 
 // Helpers
