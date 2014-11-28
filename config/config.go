@@ -7,9 +7,8 @@ import (
 	"math/rand"
 	"net"
 	"os"
+	"os/exec"
 	"strings"
-
-	log "github.com/go-distributed/gog/log"
 )
 
 // Config describes the config of the system.
@@ -49,6 +48,8 @@ type Config struct {
 	HealDuration int
 	// The REST server address.
 	RESTAddrStr string
+	// The path to user message handler(script).
+	UserMsgHandler string
 }
 
 func ParseConfig() (*Config, error) {
@@ -78,10 +79,11 @@ func ParseConfig() (*Config, error) {
 	flag.IntVar(&cfg.ShuffleDuration, "shuffle-duration", 5, "The default shuffle duration (seconds)")
 	flag.IntVar(&cfg.HealDuration, "heal", 5, "The default heal duration (seconds)")
 	flag.StringVar(&cfg.RESTAddrStr, "rest-addr", "localhost:8425", "The address of the REST server")
+	flag.StringVar(&cfg.UserMsgHandler, "user-message-handler", "", "The path to the user message handler script")
 
 	flag.Parse()
 
-	// TODO check config.
+	// Check configuration.
 	if peerStr != "" {
 		cfg.Peers = strings.Split(peerStr, ",")
 	}
@@ -92,17 +94,25 @@ func ParseConfig() (*Config, error) {
 		}
 		cfg.Peers = peers
 	}
+
+	// Check agent server address.
 	tcpAddr, err := net.ResolveTCPAddr(cfg.Net, cfg.AddrStr)
 	if err != nil {
 		return nil, err
 	}
 	cfg.LocalTCPAddr = tcpAddr
 
+	// Check REST API address.
 	_, err = net.ResolveTCPAddr(cfg.Net, cfg.RESTAddrStr)
 	if err != nil {
 		return nil, err
 	}
 
+	// Check User Message Handler.
+	_, err = exec.LookPath(cfg.UserMsgHandler)
+	if err != nil {
+		return nil, err
+	}
 	return cfg, nil
 }
 
@@ -126,9 +136,7 @@ func parsePeerFile(path string) ([]string, error) {
 
 func (cfg *Config) ShufflePeers() []string {
 	shuffledPeers := make([]string, len(cfg.Peers))
-	if copy(shuffledPeers, cfg.Peers) != len(cfg.Peers) {
-		log.Fatalf("Failed to copy\n")
-	}
+	copy(shuffledPeers, cfg.Peers)
 	for i := range shuffledPeers {
 		if i == 0 {
 			continue

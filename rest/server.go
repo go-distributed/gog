@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os/exec"
 
 	"github.com/go-distributed/gog/agent"
 	"github.com/go-distributed/gog/config"
@@ -25,6 +26,7 @@ var (
 
 // RESTServer handles RESTful requests for gog agent.
 type RESTServer struct {
+	cfg *config.Config
 	ag  agent.Agent
 	mux *http.ServeMux
 }
@@ -32,18 +34,7 @@ type RESTServer struct {
 // NewServer creates a new RESTful server for gog agent.
 // It will also starts the agent server.
 func NewServer(cfg *config.Config) *http.Server {
-	ag := agent.NewAgent(cfg)
-	go func() {
-		if err := ag.Serve(); err != nil {
-			log.Fatalf("server.NewServer(): Agent failed to serve: %v\n", err)
-		}
-	}()
-
-	handler := NewRESTServer(ag)
-
-	// Register a user message handler.
-	ag.RegisterMessageHandler(handler.UserMessagHandler)
-
+	handler := NewRESTServer(cfg)
 	return &http.Server{
 		Addr:    cfg.RESTAddrStr,
 		Handler: handler,
@@ -51,10 +42,21 @@ func NewServer(cfg *config.Config) *http.Server {
 }
 
 // NewRESTServer creates an http.Handler to handle HTTP requests.
-func NewRESTServer(ag agent.Agent) *RESTServer {
+func NewRESTServer(cfg *config.Config) http.Handler {
 	mux := http.NewServeMux()
-	rh := &RESTServer{ag, mux}
+	ag := agent.NewAgent(cfg)
+	rh := &RESTServer{cfg, ag, mux}
 	rh.RegisterAPI(mux)
+
+	// Register a user message handler.
+	ag.RegisterMessageHandler(rh.UserMessagHandler)
+
+	// Start the agent server.
+	go func() {
+		if err := ag.Serve(); err != nil {
+			log.Fatalf("server.NewServer(): Agent failed to serve: %v\n", err)
+		}
+	}()
 	return rh
 }
 
@@ -145,7 +147,10 @@ func (rh *RESTServer) Config(w http.ResponseWriter, r *http.Request) {
 // UserMessagHandler is the handler for user messages. It will run a script
 // specified by the configuration.
 func (rh *RESTServer) UserMessagHandler(msg []byte) {
-	log.Fatalf("user message :%s\n", string(msg))
+	cmd := exec.Command(rh.cfg.UserMsgHandler, string(msg))
+	if err := cmd.Run(); err != nil {
+		log.Errorf("server.UserMessageHandler(): Failed to run command: %v\n", err)
+	}
 }
 
 // ServeHTTP implements the http.Handler for RESTServer.
