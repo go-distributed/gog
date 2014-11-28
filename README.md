@@ -15,14 +15,34 @@ Gossip Over Gophers
 $ go build
 ```
 
+Show usage:
+
+```shell
+$ ./gog -h
+```
+
+
 Run a standalone node:
 
 ```shell
-$ ./gog -addr="localhost:8424"
+$ ./gog
 ```
 
 To join an existing cluster:
 
+1. Form a two-node-cluster
 ```shell
-$ ./gog -addr="localhost:8425" -peers="localhost:8424"
+$ ./gog -addr="localhost:8000" -rest-addr="localhost:8001"
+$ ./gog -addr="localhost:8002" -rest-addr="localhost:8003"
+```
+
+2. Let the first node join the second node
+```shell
+$ curl http://localhost:8001/api/join -d peer=localhost:8002
+```
+
+3. Show the view in the first node
+```shell
+$ curl http://localhost:8001/api/list
+{"active_view":[{"id":"localhost:8002","address":"localhost:8002"}],"passive_view":[]}
 ```

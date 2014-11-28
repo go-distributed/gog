@@ -40,7 +40,7 @@ func Warningf(format string, args ...interface{}) {
 	if verbose < verboseWarning {
 		return
 	}
-	fmt.Fprintf(os.Stderr, "[WARNING]: ")
+	fmt.Fprintf(os.Stderr, "[WARNING]:  ")
 	fmt.Fprintf(os.Stderr, format, args...)
 }
 

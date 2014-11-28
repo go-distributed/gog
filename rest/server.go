@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -79,6 +80,8 @@ func (rh *RESTServer) List(w http.ResponseWriter, r *http.Request) {
 
 // Join joins the agent to a cluster.
 func (rh *RESTServer) Join(w http.ResponseWriter, r *http.Request) {
+	var peers []string
+
 	if r.Method != "POST" {
 		http.Error(w, errInvalidMethod.Error(), http.StatusMethodNotAllowed)
 		return
@@ -90,9 +93,8 @@ func (rh *RESTServer) Join(w http.ResponseWriter, r *http.Request) {
 
 	peer := r.Form.Get("peer")
 
-	// Join a single peer
+	// Join a single peer.
 	if peer != "" {
-		log.Infof("Joining: %s\n", peer)
 		if err := rh.ag.Join(peer); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -100,12 +102,21 @@ func (rh *RESTServer) Join(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Join a cluster.
 	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	log.Infof("join, %v\n", string(b))
+	if err := json.Unmarshal(b, &peers); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if err := rh.ag.Join(peers...); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	return
 }
 
 // Broadcast broadcasts the message to the cluster
@@ -134,7 +145,7 @@ func (rh *RESTServer) Config(w http.ResponseWriter, r *http.Request) {
 // UserMessagHandler is the handler for user messages. It will run a script
 // specified by the configuration.
 func (rh *RESTServer) UserMessagHandler(msg []byte) {
-	log.Infof("user message")
+	log.Fatalf("user message :%s\n", string(msg))
 }
 
 // ServeHTTP implements the http.Handler for RESTServer.

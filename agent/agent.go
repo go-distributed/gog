@@ -60,6 +60,15 @@ type agent struct {
 	msgHandler MessageHandler
 }
 
+// view is a struct that encapsulates the active and passive
+// view. It is for creating json files.
+type view struct {
+	// Active View.
+	AView *arraymap.ArrayMap `json:"active_view"`
+	// Passive View.
+	PView *arraymap.ArrayMap `json:"passive_view"`
+}
+
 // NewAgent creates a new agent.
 func NewAgent(cfg *config.Config) Agent {
 	// Create a codec and register messages.
@@ -269,7 +278,7 @@ func (ag *agent) replaceActiveNode(node *node.Node) {
 			// TODO aggressively shuffle.
 			return
 		}
-		log.Warningf("Lost all peers! Join again, bb\n")
+		log.Warningf("Lost all peers! Join again\n")
 
 		ag.aView.Unlock()
 		ag.pView.Unlock()
@@ -530,10 +539,13 @@ func (ag *agent) handleUserMessage(msg *message.UserMessage) {
 // Join joins the node to the cluster by contacting the nodes provied in the
 // list.
 func (ag *agent) Join(peerAddrs ...string) error {
+	// Append the peer list.
+	ag.cfg.Peers = append(ag.cfg.Peers, peerAddrs...)
+
 	for _, peerAddr := range peerAddrs {
 		tcpAddr, err := net.ResolveTCPAddr(ag.cfg.Net, peerAddr)
 		if err != nil {
-			// TODO(yifan) log.
+			log.Errorf("Agent.Join(): Failed to ResolveTCPAddr: %v\n", err)
 			continue
 		}
 		node := &node.Node{Addr: peerAddr}
@@ -547,7 +559,7 @@ func (ag *agent) Join(peerAddrs ...string) error {
 		node.Conn = conn
 		accepted, err := ag.join(node)
 		if !accepted || err != nil {
-			// TODO(yifan) log.
+			log.Errorf("Agent.Join(): Failed to join: accepted:%v, err:%v\n", accepted, err)
 			continue
 		}
 		// Successfully Joined.
@@ -605,17 +617,8 @@ func (ag *agent) List() ([]byte, error) {
 		log.Debugf("%v\n", v.(*node.Node))
 	}
 
-	ba, err := json.Marshal(ag.aView)
-	if err != nil {
-		log.Errorf("Agent.List(): Failed to mashal: %v\n", err)
-		return nil, err
-	}
-	bb, err := json.Marshal(ag.pView)
-	if err != nil {
-		log.Errorf("Agent.List(): Failed to mashal: %v\n", err)
-		return nil, err
-	}
-	return append(ba, bb...), nil
+	view := &view{ag.aView, ag.pView}
+	return json.Marshal(view)
 }
 
 // Helpers

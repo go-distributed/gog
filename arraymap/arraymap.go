@@ -1,14 +1,15 @@
 package arraymap
 
 import (
+	"encoding/json"
 	"sync"
 )
 
 type ArrayMap struct {
-	positions map[interface{}]int `json:"-"`
-	keys      []interface{}       `json:"-"`
-	values    []interface{}       `json:"values"`
-	rwl       sync.RWMutex        `json:"-"`
+	positions map[interface{}]int
+	keys      []interface{}
+	values    []interface{}
+	rwl       sync.RWMutex
 }
 
 func NewArrayMap() *ArrayMap {
@@ -100,4 +101,8 @@ func (a *ArrayMap) RUnlock() {
 
 func (a *ArrayMap) Values() []interface{} {
 	return a.values
+}
+
+func (a *ArrayMap) MarshalJSON() ([]byte, error) {
+	return json.Marshal(a.values)
 }

@@ -8,6 +8,8 @@ import (
 	"net"
 	"os"
 	"strings"
+
+	log "github.com/go-distributed/gog/log"
 )
 
 // Config describes the config of the system.
@@ -61,9 +63,9 @@ func ParseConfig() (*Config, error) {
 	flag.StringVar(&peerFile, "peer-file", "", "Peer list file")
 	flag.StringVar(&peerStr, "peers", "", "Comma-separated list of peers")
 
-	flag.IntVar(&cfg.AViewMinSize, "min_active_view_size", 3, "The minimum size of the active view")
-	flag.IntVar(&cfg.AViewMaxSize, "max_active_view_size", 5, "The maximum size of the active view")
-	flag.IntVar(&cfg.PViewSize, "passive_view_size", 5, "The size of the passive view")
+	flag.IntVar(&cfg.AViewMinSize, "min-aview-size", 3, "The minimum size of the active view")
+	flag.IntVar(&cfg.AViewMaxSize, "max-aview-size", 5, "The maximum size of the active view")
+	flag.IntVar(&cfg.PViewSize, "pview-size", 5, "The size of the passive view")
 
 	flag.IntVar(&cfg.Ka, "ka", 1, "The number of active nodes to shuffle")
 	flag.IntVar(&cfg.Kp, "kp", 3, "The number of passive nodes to shuffle")
@@ -72,10 +74,10 @@ func ParseConfig() (*Config, error) {
 	flag.IntVar(&cfg.PRWL, "prwl", 5, "The passive random walk length")
 	flag.IntVar(&cfg.SRWL, "srwl", 3, "The shuffle random walk length")
 
-	flag.IntVar(&cfg.MLife, "msg_life", 5000, "The default message life (milliconds)")
-	flag.IntVar(&cfg.ShuffleDuration, "shuffle_duration", 5, "The default shuffle duration (seconds)")
+	flag.IntVar(&cfg.MLife, "msg-life", 5000, "The default message life (milliconds)")
+	flag.IntVar(&cfg.ShuffleDuration, "shuffle-duration", 5, "The default shuffle duration (seconds)")
 	flag.IntVar(&cfg.HealDuration, "heal", 5, "The default heal duration (seconds)")
-	flag.StringVar(&cfg.RESTAddrStr, "rest", "localhost:8425", "The address of the REST server")
+	flag.StringVar(&cfg.RESTAddrStr, "rest-addr", "localhost:8425", "The address of the REST server")
 
 	flag.Parse()
 
@@ -125,7 +127,7 @@ func parsePeerFile(path string) ([]string, error) {
 func (cfg *Config) ShufflePeers() []string {
 	shuffledPeers := make([]string, len(cfg.Peers))
 	if copy(shuffledPeers, cfg.Peers) != len(cfg.Peers) {
-		panic("Failed to copy")
+		log.Fatalf("Failed to copy\n")
 	}
 	for i := range shuffledPeers {
 		if i == 0 {
