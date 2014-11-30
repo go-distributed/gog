@@ -147,6 +147,15 @@ func (rh *RESTServer) Config(w http.ResponseWriter, r *http.Request) {
 // UserMessagHandler is the handler for user messages. It will run a script
 // specified by the configuration.
 func (rh *RESTServer) UserMessagHandler(msg []byte) {
+	if rh.cfg.UserMsgHandler == "" {
+		return
+	}
+	resp, err := http.Get("http://localhost:11000/received")
+	if err != nil {
+		panic("err")
+	}
+	resp.Body.Close()
+	return
 	cmd := exec.Command(rh.cfg.UserMsgHandler, string(msg))
 	if err := cmd.Run(); err != nil {
 		log.Errorf("server.UserMessageHandler(): Failed to run command: %v\n", err)
