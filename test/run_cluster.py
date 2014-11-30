@@ -37,7 +37,7 @@ def startNode(addr, rest_addr):
     stdoutf = open(stdoutpath, "w+")
     stderrf = open(stderrpath, "w+")
 
-    p = subprocess.Popen([gogpath, "-addr", addr, "-rest-addr", rest_addr, "-user-message-handler", userscript],
+    p = subprocess.Popen([gogpath, "-addr", addr, "-rest-addr", rest_addr, "-user-message-handler", userscript, "-peer-file", peerfile],
                          stdin=subprocess.PIPE, stdout=stdoutf, stderr=stderrf)
     process.append(p)
 
@@ -66,6 +66,12 @@ def joinNodes():
         rest_addr = rest_addrs[i]
         subprocess.call(["curl", "-d", "@"+peerfile, "-H", "Content-Type: application/json", "http://"+rest_addr+"/api/join"])
 
+def listViews():
+    nullf = open("/dev/null", "w")
+    for i in range(0, len(rest_addrs)):
+        rest_addr = rest_addrs[i]
+        subprocess.call(["curl", "http://"+rest_addr+"/api/list"], stdout=nullf, stderr=nullf)
+
 def main():
     if len(sys.argv) != 4:
         print "usage:", sys.argv[0], "[gogpath]", "[number_of_hosts]", "[number_of_kill]"
@@ -88,7 +94,10 @@ def main():
     # connecting nodes
     joinNodes()
 
-    time.sleep(10)
+    for i in range(0, 5):
+        print "Listing views %d..." %i
+        time.sleep(1)
+        listViews()
 
     print "Broadcasting message"
     # start timer

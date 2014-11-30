@@ -608,13 +608,13 @@ func (ag *agent) List() ([]byte, error) {
 	defer ag.aView.Unlock()
 	defer ag.pView.Unlock()
 
-	log.Debugf("AView:\n")
+	fmt.Printf("AView:\n")
 	for _, v := range ag.aView.Values() {
-		log.Debugf("%v\n", v.(*node.Node))
+		fmt.Printf("%v\n", v.(*node.Node))
 	}
-	log.Debugf("PView:\n")
+	fmt.Printf("PView:\n")
 	for _, v := range ag.pView.Values() {
-		log.Debugf("%v\n", v.(*node.Node))
+		fmt.Printf("%v\n", v.(*node.Node))
 	}
 
 	view := &view{ag.aView, ag.pView}

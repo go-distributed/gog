@@ -155,6 +155,7 @@ func (rh *RESTServer) UserMessagHandler(msg []byte) {
 		panic("err")
 	}
 	resp.Body.Close()
+	fmt.Println(string(msg))
 	return
 	cmd := exec.Command(rh.cfg.UserMsgHandler, string(msg))
 	if err := cmd.Run(); err != nil {
