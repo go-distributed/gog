@@ -78,7 +78,7 @@ func ParseConfig() (*Config, error) {
 	flag.IntVar(&cfg.MLife, "msg-life", 5000, "The default message life (milliconds)")
 	flag.IntVar(&cfg.ShuffleDuration, "shuffle-duration", 5, "The default shuffle duration (seconds)")
 	flag.IntVar(&cfg.HealDuration, "heal", 1, "The default heal duration (seconds)")
-	flag.StringVar(&cfg.RESTAddrStr, "rest-addr", "localhost:8425", "The address of the REST server")
+	flag.StringVar(&cfg.RESTAddrStr, "rest-addr", ":8425", "The address of the REST server")
 	flag.StringVar(&cfg.UserMsgHandler, "user-message-handler", "", "The path to the user message handler script")
 
 	flag.Parse()
