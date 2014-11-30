@@ -9,64 +9,49 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
-var mu sync.Mutex
 var hostport string
 
-var receivedNum int
+var receivedNum int32
 var startTime time.Time
 var elaspedTime time.Duration
 
 var vmu sync.Mutex
 var aViewCnt = make(map[string]int)
 var pViewCnt = make(map[string]int)
+var times = make([]time.Duration, 21)
 
 var testSerf bool
 
-var times = make([]time.Duration, 21)
-
 func handleStart(w http.ResponseWriter, r *http.Request) {
-	mu.Lock()
-	defer mu.Unlock()
-
 	startTime = time.Now()
 	elaspedTime = 0
 	receivedNum = 0
 	times = make([]time.Duration, 21)
-}
-
-func handleClean(w http.ResponseWriter, r *http.Request) {
-	mu.Lock()
-	vmu.Lock()
-	defer mu.Unlock()
-	defer vmu.Unlock()
-
-	startTime = time.Now()
-	elaspedTime = 0
-	receivedNum = 0
 	aViewCnt = make(map[string]int)
 	pViewCnt = make(map[string]int)
 }
 
 func handleReceived(w http.ResponseWriter, r *http.Request) {
-	mu.Lock()
-	defer mu.Unlock()
-	receivedNum++
-	if receivedNum == 1 {
+	reqstart := time.Now()
+	num := atomic.AddInt32(&receivedNum, 1)
+	if num == 1 {
 		startTime = time.Now()
 	}
-	elaspedTime = time.Now().Sub(startTime)
+	elaspedTime := time.Now().Sub(startTime)
 	if !testSerf {
-		if receivedNum%100 == 0 {
-			times[receivedNum/100] = elaspedTime
+		if num%100 == 0 {
+			times[num/100] = elaspedTime
 		}
 	} else {
-		if receivedNum%20 == 0 {
-			times[receivedNum/20] = elaspedTime
+		if num%20 == 0 {
+			times[num/20] = elaspedTime
 		}
 	}
+	fmt.Fprintf(w, "hello %d, time: %v, req time: %v", num, elaspedTime, time.Now().Sub(reqstart))
 }
 
 func handleQuery(w http.ResponseWriter, r *http.Request) {

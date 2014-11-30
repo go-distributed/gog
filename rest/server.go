@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"os/exec"
 
 	"github.com/go-distributed/gog/agent"
@@ -150,14 +151,9 @@ func (rh *RESTServer) UserMessagHandler(msg []byte) {
 	if rh.cfg.UserMsgHandler == "" {
 		return
 	}
-	resp, err := http.Get("http://localhost:11000/received")
-	if err != nil {
-		panic("err")
-	}
-	resp.Body.Close()
-	fmt.Println(string(msg))
-	return
 	cmd := exec.Command(rh.cfg.UserMsgHandler, string(msg))
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
 		log.Errorf("server.UserMessageHandler(): Failed to run command: %v\n", err)
 	}

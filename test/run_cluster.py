@@ -64,7 +64,8 @@ def joinNodes():
 
     for i in range(0, len(rest_addrs)):
         rest_addr = rest_addrs[i]
-        subprocess.call(["curl", "-d", "@"+peerfile, "-H", "Content-Type: application/json", "http://"+rest_addr+"/api/join"])
+        #subprocess.call(["curl", "-d", "@"+peerfile, "-H", "Content-Type: application/json", "http://"+rest_addr+"/api/join"])
+        subprocess.call(["curl", "http://"+rest_addr+"/api/join", "-d", "peer=localhost:8000"])
 
 def listViews():
     nullf = open("/dev/null", "w")
