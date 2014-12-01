@@ -6,14 +6,21 @@ import json
 
 token = ""
 specialname = "gogs"
+num = 50
+nodeaddr = ""
 
 def main():
-    if len(sys.argv) != 2:
-        print "usage: %s [token]" %sys.argv[0]
+    if len(sys.argv) != 4:
+        print "usage: %s [token] [num_per_nodes] [node_addr]" %sys.argv[0]
         return -1
 
     global token
+    global num
+    global nodeaddr
+
     token = sys.argv[1]
+    num = int(sys.argv[2])
+    nodeaddr = sys.argv[3]
 
     nullf = open("/dev/null", "w")
 
@@ -25,14 +32,18 @@ def main():
 
     jdroplets =  json.loads(droplets)["droplets"]
 
+    total = 0
     for i in range(0, len(jdroplets)):
         dropid = jdroplets[i]["id"]
         name = jdroplets[i]["name"]
         dropip = jdroplets[i]["networks"]["v4"][0]["ip_address"]
         if name == specialname:
             continue
-        print "joining %d, ip %s" % (dropid, dropip)
-        subprocess.call(["curl", "http://"+dropip+":8425/api/join", "-d", "peer=104.236.9.169:8424"])
+        for j in range(0, num):
+            restaddr = dropip+":"+str(9000+j)
+            print "joining %d, addr %s" % (total, restaddr)
+            total = total + 1
+            subprocess.call(["curl", "http://"+restaddr+"/api/join", "-d", "peer="+nodeaddr+":8000"])
 
 if __name__ == '__main__':
     main()
