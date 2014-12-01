@@ -38,7 +38,7 @@ def main():
         name = jdroplets[i]["name"]
         if name == specialname:
             continue
-        print "destroying %s" % name
+        print "destroying %d" % dropid
         subprocess.call(["curl", "-X", "DELETE", "-H", "Content-Type: application/json", "-H", "Authorization: Bearer "+token, "https://api.digitalocean.com/v2/droplets/"+str(dropid)])
 
 if __name__ == '__main__':
