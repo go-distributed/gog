@@ -1,0 +1,11 @@
+-{
+-  "name": "example.com",
+-  "region": "nyc3",
+-  "size": "512mb",
+-  "image": "8574659",
+-  "ssh_keys": [{"id":"524510"}],
+-  "backups": false,
+-  "ipv6": true,
+-  "user_data": null,
+-  "private_networking": null
+-}

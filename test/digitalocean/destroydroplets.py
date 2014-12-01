@@ -6,16 +6,19 @@ import json
 import random
 
 num = 0
-token = "2f016dd850e30bb47ba912d1cdb1779d4cc7a7c7a7e1a8ac8cd16ab867714e1f"
+token = ""
 specialname = "gogs"
 
 def main():
-    if len(sys.argv) != 2:
-        print "usage:", sys.argv[0], "[number of droplets]"
+    if len(sys.argv) != 3:
+        print "usage:", sys.argv[0], "[number of droplets] [token]"
         return -1
 
     global num
     num = int(sys.argv[1])
+
+    global token
+    token = sys.argv[2]
 
     nullf = open("/dev/null", "w")
 

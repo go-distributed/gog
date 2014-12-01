@@ -3,22 +3,17 @@
 import subprocess
 import sys
 import json
-import random
 
-num = 0
 token = ""
 specialname = "gogs"
 
 def main():
-    if len(sys.argv) != 3:
-        print "usage:", sys.argv[0], "[number of droplets] [token]"
+    if len(sys.argv) != 2:
+        print "usage: %s [token]" %sys.argv[0]
         return -1
 
-    global num
-    num = int(sys.argv[1])
-
     global token
-    token = sys.argv[2]
+    token = sys.argv[1]
 
     nullf = open("/dev/null", "w")
 
@@ -30,19 +25,14 @@ def main():
 
     jdroplets =  json.loads(droplets)["droplets"]
 
-    # Shuffle droplets
-    random.shuffle(jdroplets)
-
-    if num >= len(jdroplets):
-        num = len(jdroplets)
-
-    for i in range(0, num):
+    for i in range(0, len(jdroplets)):
         dropid = jdroplets[i]["id"]
         name = jdroplets[i]["name"]
+        dropip = jdroplets[i]["networks"]["v4"][0]["ip_address"]
         if name == specialname:
             continue
-        print "shutting down %d" % dropid
-        subprocess.call(["curl", "-X", "POST", "-H", "Content-Type: application/json", "-H", "Authorization: Bearer "+token, "-d",  "{\"type\":\"power_off\"}", "https://api.digitalocean.com/v2/droplets/"+str(dropid)+"/actions"])
+        print "joining %d, ip %s" % (dropid, dropip)
+        subprocess.call(["curl", "http://"+dropip+":8425/api/join", "-d", "peer=104.236.9.169:8424"])
 
 if __name__ == '__main__':
     main()
