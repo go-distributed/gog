@@ -1,2 +1,2 @@
 #!/bin/bash
-curl http://localhost:11000/received
+curl http://104.236.9.169:11000/received
