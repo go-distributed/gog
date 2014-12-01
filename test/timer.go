@@ -41,7 +41,7 @@ func handleReceived(w http.ResponseWriter, r *http.Request) {
 	if num == 1 {
 		startTime = time.Now()
 	}
-	elaspedTime := time.Now().Sub(startTime)
+	elaspedTime = time.Now().Sub(startTime)
 	if !testSerf {
 		if num%100 == 0 {
 			times[num/100] = elaspedTime
@@ -64,7 +64,7 @@ func handleQuery(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(w, "Received: %d, time: %v\n", i*20, times[i])
 		}
 	}
-	fmt.Fprintf(w, "total received: %d\n", receivedNum)
+	fmt.Fprintf(w, "total received: %d, elasped time: %v\n", receivedNum, elaspedTime)
 
 	vmu.Lock()
 	defer vmu.Unlock()
