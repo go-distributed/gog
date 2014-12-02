@@ -1,8 +1,8 @@
 {
   "name": "example.com",
   "region": "nyc3",
-  "size": "512mb",
-  "image": "8602428",
+  "size": "1gb",
+  "image": "8628950",
   "ssh_keys": [{"id":"524510"}],
   "backups": false,
   "ipv6": true,
