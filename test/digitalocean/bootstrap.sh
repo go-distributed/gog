@@ -1,4 +1,6 @@
 #!/bin/bash
 
-echo $GOPATH >> patht.txt
-echo $GOGPATH >> patht.txt
+cd $GOGPATH
+go build
+
+$GOGPATH/test/rungog.sh 50
