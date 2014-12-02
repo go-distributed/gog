@@ -3,4 +3,4 @@
 cd $GOGPATH
 go build
 
-#./test/rungog.sh 50
+$GOGPATH/test/rungog.sh 50 &
