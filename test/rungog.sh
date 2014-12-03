@@ -6,10 +6,11 @@ if [[ $# != 1 ]]; then
 fi
 
 num=$1
-gopath=/root/gopher
-interface=eth0
+gopath=/home/core/gopher
+interface=eth1
 
 ipaddr=$(ifconfig $interface | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}')
+echo $ipaddr
 
 rootpath=$gopath/src/github.com/go-distributed/gog
 logpath=$rootpath/test/log
