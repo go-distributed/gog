@@ -7,7 +7,7 @@ import random
 
 num = 0
 token = ""
-specialname = "gogs"
+specialname = "gog"
 
 def main():
     if len(sys.argv) != 3:

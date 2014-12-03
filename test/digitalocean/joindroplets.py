@@ -5,7 +5,7 @@ import sys
 import json
 
 token = ""
-specialname = "gogs"
+specialname = "gog"
 num = 50
 nodeaddr = ""
 
