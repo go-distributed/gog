@@ -1,11 +1,28 @@
 {
-  "name": "example.com",
+  "name": "gog-agent",
   "region": "nyc3",
   "size": "1gb",
-  "image": "8630514",
-  "ssh_keys": [{"id":"524510"}],
+  "image": "coreos-stable",
   "backups": false,
   "ipv6": true,
-  "user_data": null,
-  "private_networking": null
+  "private_networking": true,
+  "user_data":
+"#cloud-config
+
+coreos:
+  etcd:
+    # generate a new token for each unique cluster from https://discovery.etcd.io/new
+    discovery: https://discovery.etcd.io/359436b49ece7f72b79886881eb85958
+    # multi-region deployments, multi-cloud deployments, and droplets without
+    # private networking need to use $public_ipv4
+    addr: $private_ipv4:4001
+    peer-addr: $private_ipv4:7001
+  fleet:
+    public-ip: $private_ipv4   # used for fleetctl ssh command
+  units:
+    - name: etcd.service
+      command: start
+    - name: fleet.service
+      command: start",
+  "ssh_keys": ["524510"]
 }
