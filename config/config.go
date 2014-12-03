@@ -59,7 +59,7 @@ func ParseConfig() (*Config, error) {
 	cfg := new(Config)
 
 	flag.StringVar(&cfg.Net, "net", "tcp", "The network protocol")
-	flag.StringVar(&cfg.AddrStr, "addr", "localhost:8424", "The address the agent listens on")
+	flag.StringVar(&cfg.AddrStr, "addr", ":8424", "The address the agent listens on")
 
 	flag.StringVar(&peerFile, "peer-file", "", "Peer list file")
 	flag.StringVar(&peerStr, "peers", "", "Comma-separated list of peers")
