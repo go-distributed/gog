@@ -1,2 +1,2 @@
 FROM golang:onbuild
-EXPOSE 8424 8425
+EXPOSE 8424 9424

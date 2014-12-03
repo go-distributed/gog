@@ -18,7 +18,7 @@ var (
 // disconnect() sends a Disconnect message to the node and close the connection.
 // TODO(yifan): cache the connection.
 func (ag *agent) disconnect(node *node.Node) {
-	msg := &message.Disconnect{Id: proto.String(ag.id)}
+	msg := &message.Disconnect{Id: proto.Uint64(ag.id)}
 	ag.codec.WriteMsg(msg, node.Conn) // TODO record err log.
 	node.Conn.Close()
 }
@@ -28,8 +28,8 @@ func (ag *agent) disconnect(node *node.Node) {
 // use these information to establish a connection.
 func (ag *agent) forwardJoin(node, newNode *node.Node, ttl uint32) {
 	msg := &message.ForwardJoin{
-		Id:         proto.String(ag.id),
-		SourceId:   proto.String(newNode.Id),
+		Id:         proto.Uint64(ag.id),
+		SourceId:   proto.Uint64(newNode.Id),
 		SourceAddr: proto.String(newNode.Addr),
 		Ttl:        proto.Uint32(ttl),
 	}
@@ -41,7 +41,7 @@ func (ag *agent) forwardJoin(node, newNode *node.Node, ttl uint32) {
 // rejectNeighbor() sends a the NeighborReply with accept = false.
 func (ag *agent) rejectNeighbor(node *node.Node) {
 	msg := &message.NeighborReply{
-		Id:     proto.String(ag.id),
+		Id:     proto.Uint64(ag.id),
 		Accept: proto.Bool(false),
 	}
 	if err := ag.codec.WriteMsg(msg, node.Conn); err != nil {
@@ -52,7 +52,7 @@ func (ag *agent) rejectNeighbor(node *node.Node) {
 // acceptNeighbor() sends a the NeighborReply with accept = true.
 func (ag *agent) acceptNeighbor(node *node.Node) {
 	msg := &message.NeighborReply{
-		Id:     proto.String(ag.id),
+		Id:     proto.Uint64(ag.id),
 		Accept: proto.Bool(true),
 	}
 	if err := ag.codec.WriteMsg(msg, node.Conn); err != nil {
@@ -62,7 +62,7 @@ func (ag *agent) acceptNeighbor(node *node.Node) {
 
 func (ag *agent) join(node *node.Node) (bool, error) {
 	msg := &message.Join{
-		Id:   proto.String(ag.id),
+		Id:   proto.Uint64(ag.id),
 		Addr: proto.String(ag.cfg.AddrStr),
 	}
 	if err := ag.codec.WriteMsg(msg, node.Conn); err != nil {
@@ -97,7 +97,7 @@ func (ag *agent) join(node *node.Node) (bool, error) {
 
 func (ag *agent) acceptJoin(node *node.Node) error {
 	msg := &message.JoinReply{
-		Id:     proto.String(ag.id),
+		Id:     proto.Uint64(ag.id),
 		Accept: proto.Bool(true),
 	}
 	if err := ag.codec.WriteMsg(msg, node.Conn); err != nil {
@@ -110,7 +110,7 @@ func (ag *agent) acceptJoin(node *node.Node) error {
 func (ag *agent) rejectJoin(node *node.Node) error {
 	defer node.Conn.Close()
 	msg := &message.JoinReply{
-		Id:     proto.String(ag.id),
+		Id:     proto.Uint64(ag.id),
 		Accept: proto.Bool(false),
 	}
 
@@ -141,7 +141,7 @@ func (ag *agent) neighbor(node *node.Node, priority message.Neighbor_Priority) (
 	node.Conn = conn
 
 	msg := &message.Neighbor{
-		Id:       proto.String(ag.id),
+		Id:       proto.Uint64(ag.id),
 		Addr:     proto.String(ag.cfg.AddrStr),
 		Priority: priority.Enum(),
 	}
@@ -194,7 +194,7 @@ func (ag *agent) userMessage(node *node.Node, msg proto.Message) {
 }
 
 func (ag *agent) forwardShuffle(node *node.Node, msg *message.Shuffle) {
-	msg.Id = proto.String(ag.id)
+	msg.Id = proto.Uint64(ag.id)
 	if err := ag.codec.WriteMsg(msg, node.Conn); err != nil {
 		node.Conn.Close()
 	}
@@ -212,7 +212,7 @@ func (ag *agent) shuffleReply(msg *message.Shuffle, candidates []*message.Candid
 		return err
 	}
 	reply := &message.ShuffleReply{
-		Id:         proto.String(ag.id),
+		Id:         proto.Uint64(ag.id),
 		Candidates: candidates,
 	}
 	if err := ag.codec.WriteMsg(reply, conn); err != nil {
@@ -225,8 +225,8 @@ func (ag *agent) shuffleReply(msg *message.Shuffle, candidates []*message.Candid
 
 func (ag *agent) shuffle(node *node.Node, candidates []*message.Candidate) {
 	msg := &message.Shuffle{
-		Id:         proto.String(ag.id),
-		SourceId:   proto.String(ag.id),
+		Id:         proto.Uint64(ag.id),
+		SourceId:   proto.Uint64(ag.id),
 		Addr:       proto.String(ag.cfg.AddrStr),
 		Candidates: candidates,
 		Ttl:        proto.Uint32(uint32(ag.cfg.SRWL)),

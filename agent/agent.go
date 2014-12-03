@@ -41,7 +41,7 @@ type Agent interface {
 // agent implements the Agent interface.
 type agent struct {
 	// The id of the agent.
-	id string
+	id uint64
 	// Configuration.
 	cfg *config.Config
 	// Active View.
@@ -69,6 +69,17 @@ type view struct {
 	PView *arraymap.ArrayMap `json:"passive_view"`
 }
 
+func init() {
+	rand.Seed(time.Now().UnixNano())
+}
+
+func GenID() (n uint64) {
+	for n == 0 {
+		n = uint64(rand.Int63())
+	}
+	return
+}
+
 // NewAgent creates a new agent.
 func NewAgent(cfg *config.Config) Agent {
 	// Create a codec and register messages.
@@ -84,7 +95,7 @@ func NewAgent(cfg *config.Config) Agent {
 	codec.Register(&message.ShuffleReply{})
 
 	return &agent{
-		id:            cfg.AddrStr,
+		id:            GenID(),
 		cfg:           cfg,
 		codec:         codec,
 		aView:         arraymap.NewArrayMap(),
@@ -164,7 +175,7 @@ func (ag *agent) healLoop() {
 			ag.pView.Lock()
 			if ag.aView.Len() < ag.cfg.AViewMinSize {
 				if ag.pView.Len() > 0 {
-					nd := chooseRandomNode(ag.pView, "")
+					nd := chooseRandomNode(ag.pView, 0)
 					ag.neighbor(nd, message.Neighbor_Low)
 				}
 			}
@@ -186,7 +197,7 @@ func (ag *agent) shuffleLoop() {
 				ag.pView.RUnlock()
 				continue
 			}
-			node := chooseRandomNode(ag.aView, "")
+			node := chooseRandomNode(ag.aView, 0)
 			if node == nil {
 				continue
 			}
@@ -201,7 +212,7 @@ func (ag *agent) shuffleLoop() {
 func (ag *agent) makeShuffleList() []*message.Candidate {
 	candidates := make([]*message.Candidate, 0, 1+ag.cfg.Ka+ag.cfg.Kp)
 	self := &message.Candidate{
-		Id:   proto.String(ag.id),
+		Id:   proto.Uint64(ag.id),
 		Addr: proto.String(ag.cfg.AddrStr),
 	}
 	candidates = append(candidates, self)
@@ -223,7 +234,7 @@ func (ag *agent) addNodeActiveView(node *node.Node) {
 		return
 	}
 	if ag.aView.Len() == ag.cfg.AViewMaxSize {
-		n := chooseRandomNode(ag.aView, "")
+		n := chooseRandomNode(ag.aView, 0)
 		go ag.disconnect(n)
 		ag.aView.Remove(n.Id)
 		ag.addNodePassiveView(n)
@@ -244,7 +255,7 @@ func (ag *agent) addNodePassiveView(node *node.Node) {
 		return
 	}
 	if ag.pView.Len() == ag.cfg.PViewSize {
-		n := chooseRandomNode(ag.pView, "")
+		n := chooseRandomNode(ag.pView, 0)
 		ag.pView.Remove(n.Id)
 	}
 	ag.pView.Append(node.Id, node)
@@ -271,7 +282,7 @@ func (ag *agent) replaceActiveNode(node *node.Node) {
 	ag.aView.Remove(node.Id)
 	node.Conn.Close()
 
-	nd := chooseRandomNode(ag.pView, "")
+	nd := chooseRandomNode(ag.pView, 0)
 	if nd == nil {
 		log.Warningf("No nodes in passive view\n")
 		if ag.aView.Len() > 0 {
@@ -296,7 +307,7 @@ func (ag *agent) replaceActiveNode(node *node.Node) {
 	ag.neighbor(nd, message.Neighbor_Low)
 	// We need at least one active node.
 	for ag.aView.Len() == 0 {
-		nd = chooseRandomNode(ag.pView, "")
+		nd = chooseRandomNode(ag.pView, 0)
 		if nd == nil {
 			log.Warningf("Lost all peers! Join again\n")
 
@@ -578,7 +589,7 @@ func (ag *agent) Leave() error {
 func (ag *agent) Broadcast(payload []byte) error {
 	hash := hashMessage(payload)
 	msg := &message.UserMessage{
-		Id:      proto.String(ag.id),
+		Id:      proto.Uint64(ag.id),
 		Payload: payload,
 		Ts:      proto.Int64(time.Now().UnixNano()),
 	}
@@ -630,7 +641,7 @@ func hashMessage(msg []byte) [sha1.Size]byte {
 
 // chooseRandomNode() chooses a random node from the active view
 // or passive view.
-func chooseRandomNode(view *arraymap.ArrayMap, excludeId string) *node.Node {
+func chooseRandomNode(view *arraymap.ArrayMap, excludeId uint64) *node.Node {
 	if view.Len() == 0 {
 		return nil
 	}
@@ -659,7 +670,7 @@ func chooseRandomCandidates(view *arraymap.ArrayMap, n int) []*message.Candidate
 	for i := 0; i < n; i++ {
 		nd := view.GetValueAt((index + i) % view.Len()).(*node.Node)
 		candidates[i] = &message.Candidate{
-			Id:   proto.String(nd.Id),
+			Id:   proto.Uint64(nd.Id),
 			Addr: proto.String(nd.Addr),
 		}
 	}

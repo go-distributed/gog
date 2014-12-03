@@ -84,7 +84,7 @@ func (x *Neighbor_Priority) UnmarshalJSON(data []byte) error {
 
 // User defined messages.
 type UserMessage struct {
-	Id               *string `protobuf:"bytes,1,req,name=id" json:"id,omitempty"`
+	Id               *uint64 `protobuf:"varint,1,req,name=id" json:"id,omitempty"`
 	Payload          []byte  `protobuf:"bytes,2,opt,name=payload" json:"payload,omitempty"`
 	Ts               *int64  `protobuf:"varint,3,req,name=ts" json:"ts,omitempty"`
 	XXX_unrecognized []byte  `json:"-"`
@@ -93,11 +93,11 @@ type UserMessage struct {
 func (m *UserMessage) Reset()      { *m = UserMessage{} }
 func (*UserMessage) ProtoMessage() {}
 
-func (m *UserMessage) GetId() string {
+func (m *UserMessage) GetId() uint64 {
 	if m != nil && m.Id != nil {
 		return *m.Id
 	}
-	return ""
+	return 0
 }
 
 func (m *UserMessage) GetPayload() []byte {
@@ -116,7 +116,7 @@ func (m *UserMessage) GetTs() int64 {
 
 // The Join request.
 type Join struct {
-	Id               *string `protobuf:"bytes,1,req,name=id" json:"id,omitempty"`
+	Id               *uint64 `protobuf:"varint,1,req,name=id" json:"id,omitempty"`
 	Addr             *string `protobuf:"bytes,2,req,name=addr" json:"addr,omitempty"`
 	XXX_unrecognized []byte  `json:"-"`
 }
@@ -124,11 +124,11 @@ type Join struct {
 func (m *Join) Reset()      { *m = Join{} }
 func (*Join) ProtoMessage() {}
 
-func (m *Join) GetId() string {
+func (m *Join) GetId() uint64 {
 	if m != nil && m.Id != nil {
 		return *m.Id
 	}
-	return ""
+	return 0
 }
 
 func (m *Join) GetAddr() string {
@@ -140,7 +140,7 @@ func (m *Join) GetAddr() string {
 
 // The Join reply.
 type JoinReply struct {
-	Id               *string `protobuf:"bytes,1,req,name=id" json:"id,omitempty"`
+	Id               *uint64 `protobuf:"varint,1,req,name=id" json:"id,omitempty"`
 	Accept           *bool   `protobuf:"varint,2,req,name=accept" json:"accept,omitempty"`
 	XXX_unrecognized []byte  `json:"-"`
 }
@@ -148,11 +148,11 @@ type JoinReply struct {
 func (m *JoinReply) Reset()      { *m = JoinReply{} }
 func (*JoinReply) ProtoMessage() {}
 
-func (m *JoinReply) GetId() string {
+func (m *JoinReply) GetId() uint64 {
 	if m != nil && m.Id != nil {
 		return *m.Id
 	}
-	return ""
+	return 0
 }
 
 func (m *JoinReply) GetAccept() bool {
@@ -164,7 +164,7 @@ func (m *JoinReply) GetAccept() bool {
 
 // The Neighbor request.
 type Neighbor struct {
-	Id               *string            `protobuf:"bytes,1,req,name=id" json:"id,omitempty"`
+	Id               *uint64            `protobuf:"varint,1,req,name=id" json:"id,omitempty"`
 	Addr             *string            `protobuf:"bytes,2,req,name=addr" json:"addr,omitempty"`
 	Priority         *Neighbor_Priority `protobuf:"varint,3,req,name=priority,enum=message.Neighbor_Priority" json:"priority,omitempty"`
 	XXX_unrecognized []byte             `json:"-"`
@@ -173,11 +173,11 @@ type Neighbor struct {
 func (m *Neighbor) Reset()      { *m = Neighbor{} }
 func (*Neighbor) ProtoMessage() {}
 
-func (m *Neighbor) GetId() string {
+func (m *Neighbor) GetId() uint64 {
 	if m != nil && m.Id != nil {
 		return *m.Id
 	}
-	return ""
+	return 0
 }
 
 func (m *Neighbor) GetAddr() string {
@@ -196,7 +196,7 @@ func (m *Neighbor) GetPriority() Neighbor_Priority {
 
 // The reply to Neighbor request.
 type NeighborReply struct {
-	Id               *string `protobuf:"bytes,1,req,name=id" json:"id,omitempty"`
+	Id               *uint64 `protobuf:"varint,1,req,name=id" json:"id,omitempty"`
 	Accept           *bool   `protobuf:"varint,2,req,name=accept" json:"accept,omitempty"`
 	XXX_unrecognized []byte  `json:"-"`
 }
@@ -204,11 +204,11 @@ type NeighborReply struct {
 func (m *NeighborReply) Reset()      { *m = NeighborReply{} }
 func (*NeighborReply) ProtoMessage() {}
 
-func (m *NeighborReply) GetId() string {
+func (m *NeighborReply) GetId() uint64 {
 	if m != nil && m.Id != nil {
 		return *m.Id
 	}
-	return ""
+	return 0
 }
 
 func (m *NeighborReply) GetAccept() bool {
@@ -220,8 +220,8 @@ func (m *NeighborReply) GetAccept() bool {
 
 // The ForwardJoin request.
 type ForwardJoin struct {
-	Id               *string `protobuf:"bytes,1,req,name=id" json:"id,omitempty"`
-	SourceId         *string `protobuf:"bytes,2,req,name=sourceId" json:"sourceId,omitempty"`
+	Id               *uint64 `protobuf:"varint,1,req,name=id" json:"id,omitempty"`
+	SourceId         *uint64 `protobuf:"varint,2,req,name=sourceId" json:"sourceId,omitempty"`
 	SourceAddr       *string `protobuf:"bytes,3,req,name=sourceAddr" json:"sourceAddr,omitempty"`
 	Ttl              *uint32 `protobuf:"varint,4,req,name=ttl" json:"ttl,omitempty"`
 	XXX_unrecognized []byte  `json:"-"`
@@ -230,18 +230,18 @@ type ForwardJoin struct {
 func (m *ForwardJoin) Reset()      { *m = ForwardJoin{} }
 func (*ForwardJoin) ProtoMessage() {}
 
-func (m *ForwardJoin) GetId() string {
+func (m *ForwardJoin) GetId() uint64 {
 	if m != nil && m.Id != nil {
 		return *m.Id
 	}
-	return ""
+	return 0
 }
 
-func (m *ForwardJoin) GetSourceId() string {
+func (m *ForwardJoin) GetSourceId() uint64 {
 	if m != nil && m.SourceId != nil {
 		return *m.SourceId
 	}
-	return ""
+	return 0
 }
 
 func (m *ForwardJoin) GetSourceAddr() string {
@@ -260,23 +260,23 @@ func (m *ForwardJoin) GetTtl() uint32 {
 
 // The Disconnect request.
 type Disconnect struct {
-	Id               *string `protobuf:"bytes,1,req,name=id" json:"id,omitempty"`
+	Id               *uint64 `protobuf:"varint,1,req,name=id" json:"id,omitempty"`
 	XXX_unrecognized []byte  `json:"-"`
 }
 
 func (m *Disconnect) Reset()      { *m = Disconnect{} }
 func (*Disconnect) ProtoMessage() {}
 
-func (m *Disconnect) GetId() string {
+func (m *Disconnect) GetId() uint64 {
 	if m != nil && m.Id != nil {
 		return *m.Id
 	}
-	return ""
+	return 0
 }
 
 // The Candidate.
 type Candidate struct {
-	Id               *string `protobuf:"bytes,1,req,name=id" json:"id,omitempty"`
+	Id               *uint64 `protobuf:"varint,1,req,name=id" json:"id,omitempty"`
 	Addr             *string `protobuf:"bytes,2,req,name=addr" json:"addr,omitempty"`
 	XXX_unrecognized []byte  `json:"-"`
 }
@@ -284,11 +284,11 @@ type Candidate struct {
 func (m *Candidate) Reset()      { *m = Candidate{} }
 func (*Candidate) ProtoMessage() {}
 
-func (m *Candidate) GetId() string {
+func (m *Candidate) GetId() uint64 {
 	if m != nil && m.Id != nil {
 		return *m.Id
 	}
-	return ""
+	return 0
 }
 
 func (m *Candidate) GetAddr() string {
@@ -300,8 +300,8 @@ func (m *Candidate) GetAddr() string {
 
 // The Shuffle request.
 type Shuffle struct {
-	Id               *string      `protobuf:"bytes,1,req,name=id" json:"id,omitempty"`
-	SourceId         *string      `protobuf:"bytes,2,req,name=sourceId" json:"sourceId,omitempty"`
+	Id               *uint64      `protobuf:"varint,1,req,name=id" json:"id,omitempty"`
+	SourceId         *uint64      `protobuf:"varint,2,req,name=sourceId" json:"sourceId,omitempty"`
 	Addr             *string      `protobuf:"bytes,3,req,name=addr" json:"addr,omitempty"`
 	Candidates       []*Candidate `protobuf:"bytes,4,rep,name=candidates" json:"candidates,omitempty"`
 	Ttl              *uint32      `protobuf:"varint,5,req,name=ttl" json:"ttl,omitempty"`
@@ -311,18 +311,18 @@ type Shuffle struct {
 func (m *Shuffle) Reset()      { *m = Shuffle{} }
 func (*Shuffle) ProtoMessage() {}
 
-func (m *Shuffle) GetId() string {
+func (m *Shuffle) GetId() uint64 {
 	if m != nil && m.Id != nil {
 		return *m.Id
 	}
-	return ""
+	return 0
 }
 
-func (m *Shuffle) GetSourceId() string {
+func (m *Shuffle) GetSourceId() uint64 {
 	if m != nil && m.SourceId != nil {
 		return *m.SourceId
 	}
-	return ""
+	return 0
 }
 
 func (m *Shuffle) GetAddr() string {
@@ -348,7 +348,7 @@ func (m *Shuffle) GetTtl() uint32 {
 
 // The ShuffleReply.
 type ShuffleReply struct {
-	Id               *string      `protobuf:"bytes,1,req,name=id" json:"id,omitempty"`
+	Id               *uint64      `protobuf:"varint,1,req,name=id" json:"id,omitempty"`
 	Candidates       []*Candidate `protobuf:"bytes,2,rep,name=candidates" json:"candidates,omitempty"`
 	XXX_unrecognized []byte       `json:"-"`
 }
@@ -356,11 +356,11 @@ type ShuffleReply struct {
 func (m *ShuffleReply) Reset()      { *m = ShuffleReply{} }
 func (*ShuffleReply) ProtoMessage() {}
 
-func (m *ShuffleReply) GetId() string {
+func (m *ShuffleReply) GetId() uint64 {
 	if m != nil && m.Id != nil {
 		return *m.Id
 	}
-	return ""
+	return 0
 }
 
 func (m *ShuffleReply) GetCandidates() []*Candidate {
@@ -393,28 +393,22 @@ func (m *UserMessage) Unmarshal(data []byte) error {
 		wireType := int(wire & 0x7)
 		switch fieldNum {
 		case 1:
-			if wireType != 2 {
+			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
 			}
-			var stringLen uint64
+			var v uint64
 			for shift := uint(0); ; shift += 7 {
 				if index >= l {
 					return io.ErrUnexpectedEOF
 				}
 				b := data[index]
 				index++
-				stringLen |= (uint64(b) & 0x7F) << shift
+				v |= (uint64(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			postIndex := index + int(stringLen)
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			s := string(data[index:postIndex])
-			m.Id = &s
-			index = postIndex
+			m.Id = &v
 		case 2:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Payload", wireType)
@@ -497,28 +491,22 @@ func (m *Join) Unmarshal(data []byte) error {
 		wireType := int(wire & 0x7)
 		switch fieldNum {
 		case 1:
-			if wireType != 2 {
+			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
 			}
-			var stringLen uint64
+			var v uint64
 			for shift := uint(0); ; shift += 7 {
 				if index >= l {
 					return io.ErrUnexpectedEOF
 				}
 				b := data[index]
 				index++
-				stringLen |= (uint64(b) & 0x7F) << shift
+				v |= (uint64(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			postIndex := index + int(stringLen)
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			s := string(data[index:postIndex])
-			m.Id = &s
-			index = postIndex
+			m.Id = &v
 		case 2:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Addr", wireType)
@@ -585,28 +573,22 @@ func (m *JoinReply) Unmarshal(data []byte) error {
 		wireType := int(wire & 0x7)
 		switch fieldNum {
 		case 1:
-			if wireType != 2 {
+			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
 			}
-			var stringLen uint64
+			var v uint64
 			for shift := uint(0); ; shift += 7 {
 				if index >= l {
 					return io.ErrUnexpectedEOF
 				}
 				b := data[index]
 				index++
-				stringLen |= (uint64(b) & 0x7F) << shift
+				v |= (uint64(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			postIndex := index + int(stringLen)
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			s := string(data[index:postIndex])
-			m.Id = &s
-			index = postIndex
+			m.Id = &v
 		case 2:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Accept", wireType)
@@ -668,28 +650,22 @@ func (m *Neighbor) Unmarshal(data []byte) error {
 		wireType := int(wire & 0x7)
 		switch fieldNum {
 		case 1:
-			if wireType != 2 {
+			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
 			}
-			var stringLen uint64
+			var v uint64
 			for shift := uint(0); ; shift += 7 {
 				if index >= l {
 					return io.ErrUnexpectedEOF
 				}
 				b := data[index]
 				index++
-				stringLen |= (uint64(b) & 0x7F) << shift
+				v |= (uint64(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			postIndex := index + int(stringLen)
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			s := string(data[index:postIndex])
-			m.Id = &s
-			index = postIndex
+			m.Id = &v
 		case 2:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Addr", wireType)
@@ -773,28 +749,22 @@ func (m *NeighborReply) Unmarshal(data []byte) error {
 		wireType := int(wire & 0x7)
 		switch fieldNum {
 		case 1:
-			if wireType != 2 {
+			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
 			}
-			var stringLen uint64
+			var v uint64
 			for shift := uint(0); ; shift += 7 {
 				if index >= l {
 					return io.ErrUnexpectedEOF
 				}
 				b := data[index]
 				index++
-				stringLen |= (uint64(b) & 0x7F) << shift
+				v |= (uint64(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			postIndex := index + int(stringLen)
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			s := string(data[index:postIndex])
-			m.Id = &s
-			index = postIndex
+			m.Id = &v
 		case 2:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Accept", wireType)
@@ -856,51 +826,39 @@ func (m *ForwardJoin) Unmarshal(data []byte) error {
 		wireType := int(wire & 0x7)
 		switch fieldNum {
 		case 1:
-			if wireType != 2 {
+			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
 			}
-			var stringLen uint64
+			var v uint64
 			for shift := uint(0); ; shift += 7 {
 				if index >= l {
 					return io.ErrUnexpectedEOF
 				}
 				b := data[index]
 				index++
-				stringLen |= (uint64(b) & 0x7F) << shift
+				v |= (uint64(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			postIndex := index + int(stringLen)
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			s := string(data[index:postIndex])
-			m.Id = &s
-			index = postIndex
+			m.Id = &v
 		case 2:
-			if wireType != 2 {
+			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field SourceId", wireType)
 			}
-			var stringLen uint64
+			var v uint64
 			for shift := uint(0); ; shift += 7 {
 				if index >= l {
 					return io.ErrUnexpectedEOF
 				}
 				b := data[index]
 				index++
-				stringLen |= (uint64(b) & 0x7F) << shift
+				v |= (uint64(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			postIndex := index + int(stringLen)
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			s := string(data[index:postIndex])
-			m.SourceId = &s
-			index = postIndex
+			m.SourceId = &v
 		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field SourceAddr", wireType)
@@ -984,28 +942,22 @@ func (m *Disconnect) Unmarshal(data []byte) error {
 		wireType := int(wire & 0x7)
 		switch fieldNum {
 		case 1:
-			if wireType != 2 {
+			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
 			}
-			var stringLen uint64
+			var v uint64
 			for shift := uint(0); ; shift += 7 {
 				if index >= l {
 					return io.ErrUnexpectedEOF
 				}
 				b := data[index]
 				index++
-				stringLen |= (uint64(b) & 0x7F) << shift
+				v |= (uint64(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			postIndex := index + int(stringLen)
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			s := string(data[index:postIndex])
-			m.Id = &s
-			index = postIndex
+			m.Id = &v
 		default:
 			var sizeOfWire int
 			for {
@@ -1049,28 +1001,22 @@ func (m *Candidate) Unmarshal(data []byte) error {
 		wireType := int(wire & 0x7)
 		switch fieldNum {
 		case 1:
-			if wireType != 2 {
+			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
 			}
-			var stringLen uint64
+			var v uint64
 			for shift := uint(0); ; shift += 7 {
 				if index >= l {
 					return io.ErrUnexpectedEOF
 				}
 				b := data[index]
 				index++
-				stringLen |= (uint64(b) & 0x7F) << shift
+				v |= (uint64(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			postIndex := index + int(stringLen)
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			s := string(data[index:postIndex])
-			m.Id = &s
-			index = postIndex
+			m.Id = &v
 		case 2:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Addr", wireType)
@@ -1137,51 +1083,39 @@ func (m *Shuffle) Unmarshal(data []byte) error {
 		wireType := int(wire & 0x7)
 		switch fieldNum {
 		case 1:
-			if wireType != 2 {
+			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
 			}
-			var stringLen uint64
+			var v uint64
 			for shift := uint(0); ; shift += 7 {
 				if index >= l {
 					return io.ErrUnexpectedEOF
 				}
 				b := data[index]
 				index++
-				stringLen |= (uint64(b) & 0x7F) << shift
+				v |= (uint64(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			postIndex := index + int(stringLen)
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			s := string(data[index:postIndex])
-			m.Id = &s
-			index = postIndex
+			m.Id = &v
 		case 2:
-			if wireType != 2 {
+			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field SourceId", wireType)
 			}
-			var stringLen uint64
+			var v uint64
 			for shift := uint(0); ; shift += 7 {
 				if index >= l {
 					return io.ErrUnexpectedEOF
 				}
 				b := data[index]
 				index++
-				stringLen |= (uint64(b) & 0x7F) << shift
+				v |= (uint64(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			postIndex := index + int(stringLen)
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			s := string(data[index:postIndex])
-			m.SourceId = &s
-			index = postIndex
+			m.SourceId = &v
 		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Addr", wireType)
@@ -1288,28 +1222,22 @@ func (m *ShuffleReply) Unmarshal(data []byte) error {
 		wireType := int(wire & 0x7)
 		switch fieldNum {
 		case 1:
-			if wireType != 2 {
+			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
 			}
-			var stringLen uint64
+			var v uint64
 			for shift := uint(0); ; shift += 7 {
 				if index >= l {
 					return io.ErrUnexpectedEOF
 				}
 				b := data[index]
 				index++
-				stringLen |= (uint64(b) & 0x7F) << shift
+				v |= (uint64(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			postIndex := index + int(stringLen)
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			s := string(data[index:postIndex])
-			m.Id = &s
-			index = postIndex
+			m.Id = &v
 		case 2:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Candidates", wireType)
@@ -1494,8 +1422,7 @@ func (m *UserMessage) Size() (n int) {
 	var l int
 	_ = l
 	if m.Id != nil {
-		l = len(*m.Id)
-		n += 1 + l + sovMessage(uint64(l))
+		n += 1 + sovMessage(uint64(*m.Id))
 	}
 	if m.Payload != nil {
 		l = len(m.Payload)
@@ -1513,8 +1440,7 @@ func (m *Join) Size() (n int) {
 	var l int
 	_ = l
 	if m.Id != nil {
-		l = len(*m.Id)
-		n += 1 + l + sovMessage(uint64(l))
+		n += 1 + sovMessage(uint64(*m.Id))
 	}
 	if m.Addr != nil {
 		l = len(*m.Addr)
@@ -1529,8 +1455,7 @@ func (m *JoinReply) Size() (n int) {
 	var l int
 	_ = l
 	if m.Id != nil {
-		l = len(*m.Id)
-		n += 1 + l + sovMessage(uint64(l))
+		n += 1 + sovMessage(uint64(*m.Id))
 	}
 	if m.Accept != nil {
 		n += 2
@@ -1544,8 +1469,7 @@ func (m *Neighbor) Size() (n int) {
 	var l int
 	_ = l
 	if m.Id != nil {
-		l = len(*m.Id)
-		n += 1 + l + sovMessage(uint64(l))
+		n += 1 + sovMessage(uint64(*m.Id))
 	}
 	if m.Addr != nil {
 		l = len(*m.Addr)
@@ -1563,8 +1487,7 @@ func (m *NeighborReply) Size() (n int) {
 	var l int
 	_ = l
 	if m.Id != nil {
-		l = len(*m.Id)
-		n += 1 + l + sovMessage(uint64(l))
+		n += 1 + sovMessage(uint64(*m.Id))
 	}
 	if m.Accept != nil {
 		n += 2
@@ -1578,12 +1501,10 @@ func (m *ForwardJoin) Size() (n int) {
 	var l int
 	_ = l
 	if m.Id != nil {
-		l = len(*m.Id)
-		n += 1 + l + sovMessage(uint64(l))
+		n += 1 + sovMessage(uint64(*m.Id))
 	}
 	if m.SourceId != nil {
-		l = len(*m.SourceId)
-		n += 1 + l + sovMessage(uint64(l))
+		n += 1 + sovMessage(uint64(*m.SourceId))
 	}
 	if m.SourceAddr != nil {
 		l = len(*m.SourceAddr)
@@ -1601,8 +1522,7 @@ func (m *Disconnect) Size() (n int) {
 	var l int
 	_ = l
 	if m.Id != nil {
-		l = len(*m.Id)
-		n += 1 + l + sovMessage(uint64(l))
+		n += 1 + sovMessage(uint64(*m.Id))
 	}
 	if m.XXX_unrecognized != nil {
 		n += len(m.XXX_unrecognized)
@@ -1613,8 +1533,7 @@ func (m *Candidate) Size() (n int) {
 	var l int
 	_ = l
 	if m.Id != nil {
-		l = len(*m.Id)
-		n += 1 + l + sovMessage(uint64(l))
+		n += 1 + sovMessage(uint64(*m.Id))
 	}
 	if m.Addr != nil {
 		l = len(*m.Addr)
@@ -1629,12 +1548,10 @@ func (m *Shuffle) Size() (n int) {
 	var l int
 	_ = l
 	if m.Id != nil {
-		l = len(*m.Id)
-		n += 1 + l + sovMessage(uint64(l))
+		n += 1 + sovMessage(uint64(*m.Id))
 	}
 	if m.SourceId != nil {
-		l = len(*m.SourceId)
-		n += 1 + l + sovMessage(uint64(l))
+		n += 1 + sovMessage(uint64(*m.SourceId))
 	}
 	if m.Addr != nil {
 		l = len(*m.Addr)
@@ -1658,8 +1575,7 @@ func (m *ShuffleReply) Size() (n int) {
 	var l int
 	_ = l
 	if m.Id != nil {
-		l = len(*m.Id)
-		n += 1 + l + sovMessage(uint64(l))
+		n += 1 + sovMessage(uint64(*m.Id))
 	}
 	if len(m.Candidates) > 0 {
 		for _, e := range m.Candidates {
@@ -1688,7 +1604,7 @@ func sozMessage(x uint64) (n int) {
 }
 func NewPopulatedUserMessage(r randyMessage, easy bool) *UserMessage {
 	this := &UserMessage{}
-	v1 := randStringMessage(r)
+	v1 := uint64(r.Uint32())
 	this.Id = &v1
 	if r.Intn(10) != 0 {
 		v2 := r.Intn(100)
@@ -1710,7 +1626,7 @@ func NewPopulatedUserMessage(r randyMessage, easy bool) *UserMessage {
 
 func NewPopulatedJoin(r randyMessage, easy bool) *Join {
 	this := &Join{}
-	v4 := randStringMessage(r)
+	v4 := uint64(r.Uint32())
 	this.Id = &v4
 	v5 := randStringMessage(r)
 	this.Addr = &v5
@@ -1722,7 +1638,7 @@ func NewPopulatedJoin(r randyMessage, easy bool) *Join {
 
 func NewPopulatedJoinReply(r randyMessage, easy bool) *JoinReply {
 	this := &JoinReply{}
-	v6 := randStringMessage(r)
+	v6 := uint64(r.Uint32())
 	this.Id = &v6
 	v7 := bool(r.Intn(2) == 0)
 	this.Accept = &v7
@@ -1734,7 +1650,7 @@ func NewPopulatedJoinReply(r randyMessage, easy bool) *JoinReply {
 
 func NewPopulatedNeighbor(r randyMessage, easy bool) *Neighbor {
 	this := &Neighbor{}
-	v8 := randStringMessage(r)
+	v8 := uint64(r.Uint32())
 	this.Id = &v8
 	v9 := randStringMessage(r)
 	this.Addr = &v9
@@ -1748,7 +1664,7 @@ func NewPopulatedNeighbor(r randyMessage, easy bool) *Neighbor {
 
 func NewPopulatedNeighborReply(r randyMessage, easy bool) *NeighborReply {
 	this := &NeighborReply{}
-	v11 := randStringMessage(r)
+	v11 := uint64(r.Uint32())
 	this.Id = &v11
 	v12 := bool(r.Intn(2) == 0)
 	this.Accept = &v12
@@ -1760,9 +1676,9 @@ func NewPopulatedNeighborReply(r randyMessage, easy bool) *NeighborReply {
 
 func NewPopulatedForwardJoin(r randyMessage, easy bool) *ForwardJoin {
 	this := &ForwardJoin{}
-	v13 := randStringMessage(r)
+	v13 := uint64(r.Uint32())
 	this.Id = &v13
-	v14 := randStringMessage(r)
+	v14 := uint64(r.Uint32())
 	this.SourceId = &v14
 	v15 := randStringMessage(r)
 	this.SourceAddr = &v15
@@ -1776,7 +1692,7 @@ func NewPopulatedForwardJoin(r randyMessage, easy bool) *ForwardJoin {
 
 func NewPopulatedDisconnect(r randyMessage, easy bool) *Disconnect {
 	this := &Disconnect{}
-	v17 := randStringMessage(r)
+	v17 := uint64(r.Uint32())
 	this.Id = &v17
 	if !easy && r.Intn(10) != 0 {
 		this.XXX_unrecognized = randUnrecognizedMessage(r, 2)
@@ -1786,7 +1702,7 @@ func NewPopulatedDisconnect(r randyMessage, easy bool) *Disconnect {
 
 func NewPopulatedCandidate(r randyMessage, easy bool) *Candidate {
 	this := &Candidate{}
-	v18 := randStringMessage(r)
+	v18 := uint64(r.Uint32())
 	this.Id = &v18
 	v19 := randStringMessage(r)
 	this.Addr = &v19
@@ -1798,9 +1714,9 @@ func NewPopulatedCandidate(r randyMessage, easy bool) *Candidate {
 
 func NewPopulatedShuffle(r randyMessage, easy bool) *Shuffle {
 	this := &Shuffle{}
-	v20 := randStringMessage(r)
+	v20 := uint64(r.Uint32())
 	this.Id = &v20
-	v21 := randStringMessage(r)
+	v21 := uint64(r.Uint32())
 	this.SourceId = &v21
 	v22 := randStringMessage(r)
 	this.Addr = &v22
@@ -1821,7 +1737,7 @@ func NewPopulatedShuffle(r randyMessage, easy bool) *Shuffle {
 
 func NewPopulatedShuffleReply(r randyMessage, easy bool) *ShuffleReply {
 	this := &ShuffleReply{}
-	v25 := randStringMessage(r)
+	v25 := uint64(r.Uint32())
 	this.Id = &v25
 	if r.Intn(10) != 0 {
 		v26 := r.Intn(10)
@@ -1922,10 +1838,9 @@ func (m *UserMessage) MarshalTo(data []byte) (n int, err error) {
 	var l int
 	_ = l
 	if m.Id != nil {
-		data[i] = 0xa
+		data[i] = 0x8
 		i++
-		i = encodeVarintMessage(data, i, uint64(len(*m.Id)))
-		i += copy(data[i:], *m.Id)
+		i = encodeVarintMessage(data, i, uint64(*m.Id))
 	}
 	if m.Payload != nil {
 		data[i] = 0x12
@@ -1959,10 +1874,9 @@ func (m *Join) MarshalTo(data []byte) (n int, err error) {
 	var l int
 	_ = l
 	if m.Id != nil {
-		data[i] = 0xa
+		data[i] = 0x8
 		i++
-		i = encodeVarintMessage(data, i, uint64(len(*m.Id)))
-		i += copy(data[i:], *m.Id)
+		i = encodeVarintMessage(data, i, uint64(*m.Id))
 	}
 	if m.Addr != nil {
 		data[i] = 0x12
@@ -1991,10 +1905,9 @@ func (m *JoinReply) MarshalTo(data []byte) (n int, err error) {
 	var l int
 	_ = l
 	if m.Id != nil {
-		data[i] = 0xa
+		data[i] = 0x8
 		i++
-		i = encodeVarintMessage(data, i, uint64(len(*m.Id)))
-		i += copy(data[i:], *m.Id)
+		i = encodeVarintMessage(data, i, uint64(*m.Id))
 	}
 	if m.Accept != nil {
 		data[i] = 0x10
@@ -2027,10 +1940,9 @@ func (m *Neighbor) MarshalTo(data []byte) (n int, err error) {
 	var l int
 	_ = l
 	if m.Id != nil {
-		data[i] = 0xa
+		data[i] = 0x8
 		i++
-		i = encodeVarintMessage(data, i, uint64(len(*m.Id)))
-		i += copy(data[i:], *m.Id)
+		i = encodeVarintMessage(data, i, uint64(*m.Id))
 	}
 	if m.Addr != nil {
 		data[i] = 0x12
@@ -2064,10 +1976,9 @@ func (m *NeighborReply) MarshalTo(data []byte) (n int, err error) {
 	var l int
 	_ = l
 	if m.Id != nil {
-		data[i] = 0xa
+		data[i] = 0x8
 		i++
-		i = encodeVarintMessage(data, i, uint64(len(*m.Id)))
-		i += copy(data[i:], *m.Id)
+		i = encodeVarintMessage(data, i, uint64(*m.Id))
 	}
 	if m.Accept != nil {
 		data[i] = 0x10
@@ -2100,16 +2011,14 @@ func (m *ForwardJoin) MarshalTo(data []byte) (n int, err error) {
 	var l int
 	_ = l
 	if m.Id != nil {
-		data[i] = 0xa
+		data[i] = 0x8
 		i++
-		i = encodeVarintMessage(data, i, uint64(len(*m.Id)))
-		i += copy(data[i:], *m.Id)
+		i = encodeVarintMessage(data, i, uint64(*m.Id))
 	}
 	if m.SourceId != nil {
-		data[i] = 0x12
+		data[i] = 0x10
 		i++
-		i = encodeVarintMessage(data, i, uint64(len(*m.SourceId)))
-		i += copy(data[i:], *m.SourceId)
+		i = encodeVarintMessage(data, i, uint64(*m.SourceId))
 	}
 	if m.SourceAddr != nil {
 		data[i] = 0x1a
@@ -2143,10 +2052,9 @@ func (m *Disconnect) MarshalTo(data []byte) (n int, err error) {
 	var l int
 	_ = l
 	if m.Id != nil {
-		data[i] = 0xa
+		data[i] = 0x8
 		i++
-		i = encodeVarintMessage(data, i, uint64(len(*m.Id)))
-		i += copy(data[i:], *m.Id)
+		i = encodeVarintMessage(data, i, uint64(*m.Id))
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(data[i:], m.XXX_unrecognized)
@@ -2169,10 +2077,9 @@ func (m *Candidate) MarshalTo(data []byte) (n int, err error) {
 	var l int
 	_ = l
 	if m.Id != nil {
-		data[i] = 0xa
+		data[i] = 0x8
 		i++
-		i = encodeVarintMessage(data, i, uint64(len(*m.Id)))
-		i += copy(data[i:], *m.Id)
+		i = encodeVarintMessage(data, i, uint64(*m.Id))
 	}
 	if m.Addr != nil {
 		data[i] = 0x12
@@ -2201,16 +2108,14 @@ func (m *Shuffle) MarshalTo(data []byte) (n int, err error) {
 	var l int
 	_ = l
 	if m.Id != nil {
-		data[i] = 0xa
+		data[i] = 0x8
 		i++
-		i = encodeVarintMessage(data, i, uint64(len(*m.Id)))
-		i += copy(data[i:], *m.Id)
+		i = encodeVarintMessage(data, i, uint64(*m.Id))
 	}
 	if m.SourceId != nil {
-		data[i] = 0x12
+		data[i] = 0x10
 		i++
-		i = encodeVarintMessage(data, i, uint64(len(*m.SourceId)))
-		i += copy(data[i:], *m.SourceId)
+		i = encodeVarintMessage(data, i, uint64(*m.SourceId))
 	}
 	if m.Addr != nil {
 		data[i] = 0x1a
@@ -2256,10 +2161,9 @@ func (m *ShuffleReply) MarshalTo(data []byte) (n int, err error) {
 	var l int
 	_ = l
 	if m.Id != nil {
-		data[i] = 0xa
+		data[i] = 0x8
 		i++
-		i = encodeVarintMessage(data, i, uint64(len(*m.Id)))
-		i += copy(data[i:], *m.Id)
+		i = encodeVarintMessage(data, i, uint64(*m.Id))
 	}
 	if len(m.Candidates) > 0 {
 		for _, msg := range m.Candidates {
@@ -2309,70 +2213,70 @@ func (this *UserMessage) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings1.Join([]string{`&message.UserMessage{` + `Id:` + valueToGoStringMessage(this.Id, "string"), `Payload:` + valueToGoStringMessage(this.Payload, "byte"), `Ts:` + valueToGoStringMessage(this.Ts, "int64"), `XXX_unrecognized:` + fmt2.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings1.Join([]string{`&message.UserMessage{` + `Id:` + valueToGoStringMessage(this.Id, "uint64"), `Payload:` + valueToGoStringMessage(this.Payload, "byte"), `Ts:` + valueToGoStringMessage(this.Ts, "int64"), `XXX_unrecognized:` + fmt2.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *Join) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings1.Join([]string{`&message.Join{` + `Id:` + valueToGoStringMessage(this.Id, "string"), `Addr:` + valueToGoStringMessage(this.Addr, "string"), `XXX_unrecognized:` + fmt2.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings1.Join([]string{`&message.Join{` + `Id:` + valueToGoStringMessage(this.Id, "uint64"), `Addr:` + valueToGoStringMessage(this.Addr, "string"), `XXX_unrecognized:` + fmt2.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *JoinReply) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings1.Join([]string{`&message.JoinReply{` + `Id:` + valueToGoStringMessage(this.Id, "string"), `Accept:` + valueToGoStringMessage(this.Accept, "bool"), `XXX_unrecognized:` + fmt2.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings1.Join([]string{`&message.JoinReply{` + `Id:` + valueToGoStringMessage(this.Id, "uint64"), `Accept:` + valueToGoStringMessage(this.Accept, "bool"), `XXX_unrecognized:` + fmt2.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *Neighbor) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings1.Join([]string{`&message.Neighbor{` + `Id:` + valueToGoStringMessage(this.Id, "string"), `Addr:` + valueToGoStringMessage(this.Addr, "string"), `Priority:` + valueToGoStringMessage(this.Priority, "message.Neighbor_Priority"), `XXX_unrecognized:` + fmt2.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings1.Join([]string{`&message.Neighbor{` + `Id:` + valueToGoStringMessage(this.Id, "uint64"), `Addr:` + valueToGoStringMessage(this.Addr, "string"), `Priority:` + valueToGoStringMessage(this.Priority, "message.Neighbor_Priority"), `XXX_unrecognized:` + fmt2.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *NeighborReply) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings1.Join([]string{`&message.NeighborReply{` + `Id:` + valueToGoStringMessage(this.Id, "string"), `Accept:` + valueToGoStringMessage(this.Accept, "bool"), `XXX_unrecognized:` + fmt2.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings1.Join([]string{`&message.NeighborReply{` + `Id:` + valueToGoStringMessage(this.Id, "uint64"), `Accept:` + valueToGoStringMessage(this.Accept, "bool"), `XXX_unrecognized:` + fmt2.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *ForwardJoin) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings1.Join([]string{`&message.ForwardJoin{` + `Id:` + valueToGoStringMessage(this.Id, "string"), `SourceId:` + valueToGoStringMessage(this.SourceId, "string"), `SourceAddr:` + valueToGoStringMessage(this.SourceAddr, "string"), `Ttl:` + valueToGoStringMessage(this.Ttl, "uint32"), `XXX_unrecognized:` + fmt2.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings1.Join([]string{`&message.ForwardJoin{` + `Id:` + valueToGoStringMessage(this.Id, "uint64"), `SourceId:` + valueToGoStringMessage(this.SourceId, "uint64"), `SourceAddr:` + valueToGoStringMessage(this.SourceAddr, "string"), `Ttl:` + valueToGoStringMessage(this.Ttl, "uint32"), `XXX_unrecognized:` + fmt2.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *Disconnect) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings1.Join([]string{`&message.Disconnect{` + `Id:` + valueToGoStringMessage(this.Id, "string"), `XXX_unrecognized:` + fmt2.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings1.Join([]string{`&message.Disconnect{` + `Id:` + valueToGoStringMessage(this.Id, "uint64"), `XXX_unrecognized:` + fmt2.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *Candidate) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings1.Join([]string{`&message.Candidate{` + `Id:` + valueToGoStringMessage(this.Id, "string"), `Addr:` + valueToGoStringMessage(this.Addr, "string"), `XXX_unrecognized:` + fmt2.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings1.Join([]string{`&message.Candidate{` + `Id:` + valueToGoStringMessage(this.Id, "uint64"), `Addr:` + valueToGoStringMessage(this.Addr, "string"), `XXX_unrecognized:` + fmt2.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *Shuffle) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings1.Join([]string{`&message.Shuffle{` + `Id:` + valueToGoStringMessage(this.Id, "string"), `SourceId:` + valueToGoStringMessage(this.SourceId, "string"), `Addr:` + valueToGoStringMessage(this.Addr, "string"), `Candidates:` + fmt2.Sprintf("%#v", this.Candidates), `Ttl:` + valueToGoStringMessage(this.Ttl, "uint32"), `XXX_unrecognized:` + fmt2.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings1.Join([]string{`&message.Shuffle{` + `Id:` + valueToGoStringMessage(this.Id, "uint64"), `SourceId:` + valueToGoStringMessage(this.SourceId, "uint64"), `Addr:` + valueToGoStringMessage(this.Addr, "string"), `Candidates:` + fmt2.Sprintf("%#v", this.Candidates), `Ttl:` + valueToGoStringMessage(this.Ttl, "uint32"), `XXX_unrecognized:` + fmt2.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *ShuffleReply) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings1.Join([]string{`&message.ShuffleReply{` + `Id:` + valueToGoStringMessage(this.Id, "string"), `Candidates:` + fmt2.Sprintf("%#v", this.Candidates), `XXX_unrecognized:` + fmt2.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings1.Join([]string{`&message.ShuffleReply{` + `Id:` + valueToGoStringMessage(this.Id, "uint64"), `Candidates:` + fmt2.Sprintf("%#v", this.Candidates), `XXX_unrecognized:` + fmt2.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func valueToGoStringMessage(v interface{}, typ string) string {

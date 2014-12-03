@@ -73,12 +73,12 @@ func ParseConfig() (*Config, error) {
 
 	flag.IntVar(&cfg.ARWL, "arwl", 5, "The active random walk length")
 	flag.IntVar(&cfg.PRWL, "prwl", 5, "The passive random walk length")
-	flag.IntVar(&cfg.SRWL, "srwl", 3, "The shuffle random walk length")
+	flag.IntVar(&cfg.SRWL, "srwl", 5, "The shuffle random walk length")
 
 	flag.IntVar(&cfg.MLife, "msg-life", 5000, "The default message life (milliconds)")
 	flag.IntVar(&cfg.ShuffleDuration, "shuffle-duration", 5, "The default shuffle duration (seconds)")
 	flag.IntVar(&cfg.HealDuration, "heal", 1, "The default heal duration (seconds)")
-	flag.StringVar(&cfg.RESTAddrStr, "rest-addr", ":8425", "The address of the REST server")
+	flag.StringVar(&cfg.RESTAddrStr, "rest-addr", ":9424", "The address of the REST server")
 	flag.StringVar(&cfg.UserMsgHandler, "user-message-handler", "", "The path to the user message handler script")
 
 	flag.Parse()

@@ -7,7 +7,7 @@ import (
 // Node decribes a node in the overlay.
 type Node struct {
 	// Id is the node's identification.
-	Id string `json:"id"`
+	Id uint64 `json:"id"`
 	// Addr is the network address of the node,
 	// in the form of "host:port".
 	Addr string `json:"address"`
