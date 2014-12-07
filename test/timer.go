@@ -51,6 +51,8 @@ func handleReceived(w http.ResponseWriter, r *http.Request) {
 			times[num/20] = elaspedTime
 		}
 	}
+	b, err := ioutil.ReadAll(r.Body)
+	fmt.Println(string(b))
 	fmt.Fprintf(w, "hello %d, time: %v, req time: %v", num, elaspedTime, time.Now().Sub(reqstart))
 }
 

@@ -1,2 +1,2 @@
 #!/bin/bash
-curl http://104.236.17.148:11000/received
+curl -XPOST http://104.236.17.148:11000/received -d $1
