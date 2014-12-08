@@ -19,6 +19,7 @@ const (
 	joinURL      = "/api/join"
 	broadcastURL = "/api/broadcast"
 	configURL    = "/api/config"
+	leaveURL     = "/api/leave"
 )
 
 var (
@@ -67,6 +68,7 @@ func (rh *RESTServer) RegisterAPI(mux *http.ServeMux) {
 	mux.HandleFunc(joinURL, rh.Join)
 	mux.HandleFunc(broadcastURL, rh.Broadcast)
 	mux.HandleFunc(configURL, rh.Config)
+	mux.HandleFunc(leaveURL, rh.Leave)
 	return
 }
 
@@ -143,6 +145,11 @@ func (rh *RESTServer) Broadcast(w http.ResponseWriter, r *http.Request) {
 // Config get/set the current configuration.
 func (rh *RESTServer) Config(w http.ResponseWriter, r *http.Request) {
 	log.Infof("config")
+}
+
+// Leave makes the agent to exit.
+func (rh *RESTServer) Leave(w http.ResponseWriter, r *http.Request) {
+	rh.ag.Leave()
 }
 
 // UserMessagHandler is the handler for user messages. It will run a script

@@ -3,9 +3,9 @@ package agent
 import (
 	"crypto/sha1"
 	"encoding/json"
-	"fmt"
 	"math/rand"
 	"net"
+	"os"
 	"time"
 
 	"github.com/go-distributed/gog/arraymap"
@@ -29,7 +29,7 @@ type Agent interface {
 	// Join joins the peers.
 	Join(peerAddrs ...string) error
 	// Leave causes the agent to leave the cluster.
-	Leave() error
+	Leave()
 	// Broadcast broadcasts a message to the cluster.
 	Broadcast(msg []byte) error
 	// RegisterMessageHandler registers a user provided callback.
@@ -586,8 +586,9 @@ func (ag *agent) Join(peerAddrs ...string) error {
 }
 
 // Leave causes the agent to leave the cluster.
-func (ag *agent) Leave() error {
-	return fmt.Errorf("Fill me in")
+func (ag *agent) Leave() {
+	log.Infof("Agent is leaving...\n")
+	os.Exit(0)
 }
 
 // Broadcast broadcasts a message to the cluster.
