@@ -52,6 +52,10 @@ func handleReceived(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	b, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 	fmt.Println(string(b))
 	fmt.Fprintf(w, "hello %d, time: %v, req time: %v", num, elaspedTime, time.Now().Sub(reqstart))
 }

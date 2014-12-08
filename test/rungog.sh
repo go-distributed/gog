@@ -6,8 +6,8 @@ if [[ $# != 1 ]]; then
 fi
 
 num=$1
-gopath=/home/core/gopher
-interface=eth1
+gopath=/root/gopher
+interface=eth0
 
 ipaddr=$(ifconfig $interface | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}')
 echo $ipaddr
