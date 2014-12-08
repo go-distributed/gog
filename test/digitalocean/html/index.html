@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+body {
+  width: 960px;
+  margin: 20px auto 20px auto;
+}
+
+#d3 {
+  outline: 1px white solid;
+  width: 960px;
+  overflow: hidden;
+}
+
+#d3 div {
+  width: 30px;
+  height: 30px;
+  background-color: white;
+  outline: 1px white solid;
+  float: left;
+  margin: 1px;
+  display: block;
+}
+
+</style>
+
+<p><button id="click">Click me!</button> Built with <a href="http://mbostock.github.com/d3/">d3.js</a>. A response to Rich Bradshaw’s <a href="http://css3.bradshawenterprises.com/demos/speed.php">jQuery <i>vs.</i> CSS transition speed test</a>.
+
+<div id="d3"></div>
+
+<script src="http://d3js.org/d3.v3.js"></script>
+<script>
+
+var lines = 2;
+var nodes_per_line = 30;
+var datas; // global data.
+
+var div = d3.select("#d3").selectAll("div")
+    .data(d3.range(lines * nodes_per_line))
+  .enter().append("div");
+
+function refresh_colors() {
+  d3.select("#d3").selectAll("div").each(function(d, i) {
+    d3.select(this).style("background-color", datas[i]);
+  });
+}
+
+d3.select("#click").on("click", function() {
+  d3.json("http://localhost:11000/json", function(error, json) {
+    if (error) return console.warn(error);
+    datas = json;
+    refresh_colors();
+  });
+});
+//div
+//    .style("background-color", null)
+//    .style("outline-color", null)
+//  .transition()
+//    .duration(1000)
+//    .style("background-color", "black")
+//    .style("outline-color", "red");
+
+</script>

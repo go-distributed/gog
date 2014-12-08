@@ -1,11 +1,15 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"math"
 	"net/http"
+	"os"
+	"path"
 	"strconv"
 	"strings"
 	"sync"
@@ -26,7 +30,32 @@ var times = make([]time.Duration, 21)
 
 var testSerf bool
 
+var htmldir string
+
+var messageArray []string
+
 func handleStart(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	num := r.Form.Get("num")
+	if num == "" {
+		num = "1000"
+	}
+	fmt.Println("total number:", num)
+
+	numInt, err := strconv.Atoi(num)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	messageArray = make([]string, numInt)
+	for i := range messageArray {
+		messageArray[i] = "green"
+	}
+
 	startTime = time.Now()
 	elaspedTime = 0
 	receivedNum = 0
@@ -36,7 +65,13 @@ func handleStart(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleReceived(w http.ResponseWriter, r *http.Request) {
-	reqstart := time.Now()
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	msg := r.Form.Get("color")
+	//reqstart := time.Now()
 	num := atomic.AddInt32(&receivedNum, 1)
 	if num == 1 {
 		startTime = time.Now()
@@ -51,13 +86,9 @@ func handleReceived(w http.ResponseWriter, r *http.Request) {
 			times[num/20] = elaspedTime
 		}
 	}
-	b, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	fmt.Println(string(b))
-	fmt.Fprintf(w, "hello %d, time: %v, req time: %v", num, elaspedTime, time.Now().Sub(reqstart))
+
+	messageArray[num] = msg
+	//fmt.Fprintf(w, "hello %d, time: %v, req time: %v", num, elaspedTime, time.Now().Sub(reqstart))
 }
 
 func handleQuery(w http.ResponseWriter, r *http.Request) {
@@ -79,6 +110,30 @@ func handleQuery(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Aview avg: %v, std: %v\n", avg, std)
 	avg, std = computeView(pViewCnt)
 	fmt.Fprintf(w, "Pview avg: %v, std: %v\n", avg, std)
+}
+
+func handleIndex(w http.ResponseWriter, r *http.Request) {
+	indexPath := path.Join(htmldir, "/index.html")
+
+	indexFile, err := os.Open(indexPath)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	_, err = io.Copy(w, indexFile)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func handleJson(w http.ResponseWriter, r *http.Request) {
+	b, err := json.Marshal(messageArray)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	fmt.Fprintf(w, string(b))
 }
 
 func handleView(w http.ResponseWriter, r *http.Request) {
@@ -130,16 +185,19 @@ func computeView(view map[string]int) (float64, float64) {
 func init() {
 	flag.StringVar(&hostport, "hostport", ":11000", "The server's address")
 	flag.BoolVar(&testSerf, "testserf", false, "If testing serf")
+	flag.StringVar(&htmldir, "htmldir", "", "The htmldir")
 }
 
 func main() {
 	flag.Parse()
 
 	fmt.Println("Start server...")
+	http.HandleFunc("/index", handleIndex)
 	http.HandleFunc("/start", handleStart)
 	http.HandleFunc("/received", handleReceived)
 	http.HandleFunc("/query", handleQuery)
 	http.HandleFunc("/view", handleView)
+	http.HandleFunc("/json", handleJson)
 
 	if err := http.ListenAndServe(hostport, nil); err != nil {
 		fmt.Println(err)
