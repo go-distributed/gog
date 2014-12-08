@@ -1,0 +1,15 @@
+[Unit]
+Description=gog
+After=docker.service
+Requires=docker.service
+
+[Service]
+TimeoutStartSec=0
+ExecStartPre=-/usr/bin/docker kill gog8000
+ExecStartPre=-/usr/bin/docker rm gog8000
+ExecStartPre=/usr/bin/docker pull yifan/gog
+ExecStart=/usr/bin/docker run --name gog8000 -ti -p 8000:8424 -p 9000:9424 --rm yifan/gog
+ExecStop=/usr/bin/docker kill gog8000
+
+[X-Fleet]
+Global=true
