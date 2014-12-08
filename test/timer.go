@@ -71,7 +71,7 @@ func handleReceived(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	messageArray[num] = msg
+	messageArray[num-1] = msg
 	//fmt.Fprintf(w, "hello %d, time: %v, req time: %v", num, elaspedTime, time.Now().Sub(reqstart))
 }
 
