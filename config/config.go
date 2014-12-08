@@ -14,44 +14,44 @@ import (
 // Config describes the config of the system.
 type Config struct {
 	// Net should be tcp4 or tcp6.
-	Net string
+	Net string `json:"net"`
 	// AddrStr is the local address string.
-	AddrStr string
+	AddrStr string `json:"address"`
 	// Peers is peer list.
-	Peers []string
+	Peers []string `json:"-"`
 	// LocalTCPAddr is TCP address parsed from
 	// Net and AddrStr.
-	LocalTCPAddr *net.TCPAddr
+	LocalTCPAddr *net.TCPAddr `json:"-"`
 	// AViewMinSize is the minimum size of the active view.
-	AViewMinSize int
+	AViewMinSize int `json:"active_view_min"`
 	// AViewMaxSize is the maximum size of the active view.
-	AViewMaxSize int
+	AViewMaxSize int `json:"active_view_max"`
 	// PViewSize is the size of the passive view.
-	PViewSize int
+	PViewSize int `json:"passive_view"`
 	// Ka is the number of nodes to choose from active view
 	// when shuffling views.
-	Ka int
+	Ka int `json:"ka"`
 	// Kp is the number of nodes to choose from passive view
 	// when shuffling views.
-	Kp int
+	Kp int `json:"kb"`
 	// Active Random Walk Length.
-	ARWL int
+	ARWL int `json:"arwl"`
 	// Passive Random Walk Length.
-	PRWL int
+	PRWL int `json:"prwl"`
 	// Shuffle Random Walk Length.
-	SRWL int
+	SRWL int `json:"srwl"`
 	// Message life.
-	MLife int
+	MLife int `json:"message_life"`
 	// Shuffle Duration in seconds.
-	ShuffleDuration int
+	ShuffleDuration int `json:"shuffle_duration"`
 	// Heal Duration in seconds.
-	HealDuration int
+	HealDuration int `json:"heal_duration"`
 	// The REST server address.
-	RESTAddrStr string
+	RESTAddrStr string `json:"rest_addr"`
 	// The path to user message handler(script).
-	UserMsgHandler string
+	UserMsgHandler string `json:"user_message_handler"`
 	// The duration to purge message buffer.
-	PurgeDuration int
+	PurgeDuration int `json:"purge_duration"`
 }
 
 func ParseConfig() (*Config, error) {

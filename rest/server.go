@@ -144,7 +144,12 @@ func (rh *RESTServer) Broadcast(w http.ResponseWriter, r *http.Request) {
 
 // Config get/set the current configuration.
 func (rh *RESTServer) Config(w http.ResponseWriter, r *http.Request) {
-	log.Infof("config")
+	b, err := json.Marshal(rh.cfg)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	fmt.Fprint(w, string(b))
 }
 
 // Leave makes the agent to exit.
