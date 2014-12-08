@@ -175,7 +175,7 @@ func init() {
 func main() {
 	flag.Parse()
 
-	messageArray = make([]string, 600)
+	messageArray = make([]string, 900)
 	for i := range messageArray {
 		messageArray[i] = "white"
 	}

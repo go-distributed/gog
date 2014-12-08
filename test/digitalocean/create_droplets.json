@@ -2,7 +2,7 @@
   "name": "gog-agent",
   "region": "nyc3",
   "size": "1gb",
-  "image": "8799736",
+  "image": "8801232",
   "backups": false,
   "ipv6": false,
   "private_networking": false,
