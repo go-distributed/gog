@@ -40,22 +40,6 @@ func handleStart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	num := r.Form.Get("num")
-	if num == "" {
-		num = "1000"
-	}
-	fmt.Println("total number:", num)
-
-	numInt, err := strconv.Atoi(num)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	messageArray = make([]string, numInt)
-	for i := range messageArray {
-		messageArray[i] = "green"
-	}
-
 	startTime = time.Now()
 	elaspedTime = 0
 	receivedNum = 0
@@ -190,6 +174,11 @@ func init() {
 
 func main() {
 	flag.Parse()
+
+	messageArray = make([]string, 600)
+	for i := range messageArray {
+		messageArray[i] = "white"
+	}
 
 	fmt.Println("Start server...")
 	http.HandleFunc("/index", handleIndex)
