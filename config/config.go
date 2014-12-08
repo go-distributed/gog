@@ -50,6 +50,8 @@ type Config struct {
 	RESTAddrStr string
 	// The path to user message handler(script).
 	UserMsgHandler string
+	// The duration to purge message buffer.
+	PurgeDuration int
 }
 
 func ParseConfig() (*Config, error) {
@@ -75,11 +77,12 @@ func ParseConfig() (*Config, error) {
 	flag.IntVar(&cfg.PRWL, "prwl", 5, "The passive random walk length")
 	flag.IntVar(&cfg.SRWL, "srwl", 5, "The shuffle random walk length")
 
-	flag.IntVar(&cfg.MLife, "msg-life", 5000, "The default message life (milliconds)")
+	flag.IntVar(&cfg.MLife, "msg-life", 5000, "The default message life (milliseconds)")
 	flag.IntVar(&cfg.ShuffleDuration, "shuffle-duration", 5, "The default shuffle duration (seconds)")
 	flag.IntVar(&cfg.HealDuration, "heal", 1, "The default heal duration (seconds)")
 	flag.StringVar(&cfg.RESTAddrStr, "rest-addr", ":9424", "The address of the REST server")
 	flag.StringVar(&cfg.UserMsgHandler, "user-message-handler", "", "The path to the user message handler script")
+	flag.IntVar(&cfg.PurgeDuration, "purge-duration", 5000, "The default purge duration (milliseconds)")
 
 	flag.Parse()
 

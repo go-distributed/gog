@@ -523,23 +523,28 @@ func (ag *agent) handleUserMessage(msg *message.UserMessage) {
 
 	// Test if the message has been already received.
 	hash := hashMessage(msg.GetPayload())
-	ag.msgBuffer.RLock()
-	if ag.msgBuffer.Has(hash) {
-		ag.msgBuffer.RUnlock()
-		log.Debugf("Message is alread received, hash: %v\n", hash)
-		return
-	}
-	ag.msgBuffer.RUnlock()
 
 	ag.msgBuffer.Lock()
-	ag.msgBuffer.Append(hash, msg)
-	ag.msgBuffer.Unlock()
+	defer ag.msgBuffer.Unlock()
+
+	if ag.msgBuffer.Has(hash) {
+		purgeDeadline := ag.msgBuffer.GetValueOf(hash)
+		if purgeDeadline.(int64) >= now {
+			log.Debugf("Message is alread received, and with purge deadline, hash: %v\n", hash)
+			return
+		}
+		ag.msgBuffer.Remove(hash)
+	}
+
+	purgeDeadline := now + ms.Nanoseconds()*int64(ag.cfg.PurgeDuration)
+	ag.msgBuffer.Append(hash, purgeDeadline)
 
 	// Invoke user's message handler.
 	go ag.msgHandler(msg.GetPayload())
 
 	ag.aView.Lock()
 	defer ag.aView.Unlock()
+
 	for _, v := range ag.aView.Values() {
 		nd := v.(*node.Node)
 		go ag.userMessage(nd, msg)
@@ -587,15 +592,11 @@ func (ag *agent) Leave() error {
 
 // Broadcast broadcasts a message to the cluster.
 func (ag *agent) Broadcast(payload []byte) error {
-	hash := hashMessage(payload)
 	msg := &message.UserMessage{
 		Id:      proto.Uint64(ag.id),
 		Payload: payload,
 		Ts:      proto.Int64(time.Now().UnixNano()),
 	}
-	ag.msgBuffer.Lock()
-	ag.msgBuffer.Append(hash, msg)
-	ag.msgBuffer.Unlock()
 
 	ag.aView.Lock()
 	defer ag.aView.Unlock()
