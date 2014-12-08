@@ -32,7 +32,7 @@ body {
 <script src="http://d3js.org/d3.v3.js"></script>
 <script>
 
-var lines = 2;
+var lines = 20;
 var nodes_per_line = 30;
 var datas; // global data.
 
@@ -47,7 +47,7 @@ function refresh_colors() {
 }
 
 d3.select("#click").on("click", function() {
-  d3.json("http://localhost:11000/json", function(error, json) {
+  d3.json("/json", function(error, json) {
     if (error) return console.warn(error);
     datas = json;
     refresh_colors();
