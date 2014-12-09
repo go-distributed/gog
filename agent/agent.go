@@ -468,7 +468,7 @@ func (ag *agent) handleShuffle(msg *message.Shuffle) {
 	defer ag.pView.Unlock()
 
 	ttl := msg.GetTtl()
-	if ttl > 0 && ag.aView.Len() > 1 {
+	if ttl > 0 && ag.pView.Len() > 1 {
 		node := chooseRandomNode(ag.aView, msg.GetId())
 		msg.Ttl = proto.Uint32(ttl - 1)
 		go ag.forwardShuffle(node, msg)
