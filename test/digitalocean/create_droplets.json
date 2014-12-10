@@ -1,6 +1,6 @@
 {
   "name": "gog-agent",
-  "region": "nyc3",
+  "region": "nyc2",
   "size": "1gb",
   "image": "8801232",
   "backups": false,
