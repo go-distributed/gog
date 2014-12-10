@@ -8,6 +8,7 @@ import random
 num = 0
 token = ""
 specialname = "gog"
+specialnameserf = "serf"
 
 def main():
     if len(sys.argv) != 3:
@@ -39,7 +40,7 @@ def main():
     for i in range(0, num):
         dropid = jdroplets[i]["id"]
         name = jdroplets[i]["name"]
-        if name == specialname:
+        if name == specialname or name == specialnameserf:
             continue
         print "destroying %d" % dropid
         subprocess.call(["curl", "-X", "DELETE", "-H", "Content-Type: application/json", "-H", "Authorization: Bearer "+token, "https://api.digitalocean.com/v2/droplets/"+str(dropid)])

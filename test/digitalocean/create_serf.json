@@ -1,8 +1,8 @@
 {
-  "name": "gog-agent",
-  "region": "nyc3",
+  "name": "serf-agent",
+  "region": "sgp1",
   "size": "1gb",
-  "image": "8801232",
+  "image": "8862144",
   "backups": false,
   "ipv6": false,
   "private_networking": false,
