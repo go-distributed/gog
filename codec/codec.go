@@ -104,6 +104,12 @@ func (pc *ProtobufCodec) WriteMsg(msg proto.Message, w io.Writer) error {
 func (pc *ProtobufCodec) ReadMsg(r io.Reader) (proto.Message, error) {
 	var length int32
 
+	defer func() {
+		if err := recover(); err != nil {
+			log.Errorf("Recovery from panic: %v", err)
+		}
+	}()
+
 	// Read the length.
 	if err := binary.Read(r, binary.LittleEndian, &length); err != nil {
 		return nil, err
