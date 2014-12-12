@@ -6,6 +6,7 @@ import json
 
 token = ""
 specialname = "gog"
+serfname = "serf"
 num = 50
 nodeaddr = ""
 
@@ -37,7 +38,7 @@ def main():
         dropid = jdroplets[i]["id"]
         name = jdroplets[i]["name"]
         dropip = jdroplets[i]["networks"]["v4"][0]["ip_address"]
-        if name == specialname:
+        if name == specialname or name == serfname:
             continue
         for j in range(0, num):
             restaddr = dropip+":"+str(9000+j)

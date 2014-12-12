@@ -26,7 +26,7 @@ var elaspedTime time.Duration
 var vmu sync.Mutex
 var aViewCnt = make(map[string]int)
 var pViewCnt = make(map[string]int)
-var times = make([]time.Duration, 21)
+var times = make(map[string]int)
 
 var testSerf bool
 
@@ -43,7 +43,7 @@ func handleStart(w http.ResponseWriter, r *http.Request) {
 	startTime = time.Now()
 	elaspedTime = 0
 	receivedNum = 0
-	times = make([]time.Duration, 21)
+	times = make(map[string]int)
 	aViewCnt = make(map[string]int)
 	pViewCnt = make(map[string]int)
 }
@@ -63,11 +63,7 @@ func handleReceived(w http.ResponseWriter, r *http.Request) {
 	elaspedTime = time.Now().Sub(startTime)
 	if !testSerf {
 		if num%100 == 0 {
-			times[num/100] = elaspedTime
-		}
-	} else {
-		if num%20 == 0 {
-			times[num/20] = elaspedTime
+			times[fmt.Sprintf("%d", num)] = int(elaspedTime.Nanoseconds() / 1000000)
 		}
 	}
 
@@ -78,11 +74,7 @@ func handleReceived(w http.ResponseWriter, r *http.Request) {
 func handleQuery(w http.ResponseWriter, r *http.Request) {
 	if !testSerf {
 		for i := range times {
-			fmt.Fprintf(w, "Received: %d, time: %v\n", i*100, times[i])
-		}
-	} else {
-		for i := range times {
-			fmt.Fprintf(w, "Received: %d, time: %v\n", i*20, times[i])
+			fmt.Fprintf(w, "Received: %s, time: %dms\n", i, times[i])
 		}
 	}
 	fmt.Fprintf(w, "total received: %d, elasped time: %v\n", receivedNum, elaspedTime)
@@ -114,6 +106,20 @@ func handleIndex(w http.ResponseWriter, r *http.Request) {
 func handleJson(w http.ResponseWriter, r *http.Request) {
 	b, err := json.Marshal(messageArray)
 	if err != nil {
+		fmt.Println("error handle json", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	fmt.Fprintf(w, string(b))
+}
+
+func handleDemoJson(w http.ResponseWriter, r *http.Request) {
+	times["0"] = 0
+	times[fmt.Sprintf("%d", int(receivedNum))] = int(elaspedTime.Nanoseconds() / 1000000)
+
+	b, err := json.Marshal(times)
+	if err != nil {
+		fmt.Println("error handle json demo", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -187,6 +193,7 @@ func main() {
 	http.HandleFunc("/query", handleQuery)
 	http.HandleFunc("/view", handleView)
 	http.HandleFunc("/json", handleJson)
+	http.HandleFunc("/demojson", handleDemoJson)
 
 	if err := http.ListenAndServe(hostport, nil); err != nil {
 		fmt.Println(err)

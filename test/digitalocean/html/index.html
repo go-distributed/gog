@@ -23,9 +23,26 @@ body {
   display: block;
 }
 
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.x.axis path {
+  display: none;
+}
+
+.line {
+  fill: none;
+  stroke: steelblue;
+  stroke-width: 1.5px;
+}
+
 </style>
 
-<p><button id="click">Click me!</button> Built with <a href="http://mbostock.github.com/d3/">d3.js</a>. A response to Rich Bradshaw’s <a href="http://css3.bradshawenterprises.com/demos/speed.php">jQuery <i>vs.</i> CSS transition speed test</a>.
+<p><button id="click">Show result!</button>
 
 <div id="d3"></div>
 
@@ -46,19 +63,92 @@ function refresh_colors() {
   });
 }
 
+
+
 d3.select("#click").on("click", function() {
   d3.json("/json", function(error, json) {
     if (error) return console.warn(error);
     datas = json;
+    d3.json("/demojson", render_statics);
     refresh_colors();
   });
 });
-//div
-//    .style("background-color", null)
-//    .style("outline-color", null)
-//  .transition()
-//    .duration(1000)
-//    .style("background-color", "black")
-//    .style("outline-color", "red");
+
+
+function render_statics(error, json) {
+  console.log(json[100]);
+  var data = Object.keys(json).map(function(key) {
+    return {"date" : parseInt(key), "close" : json[key] }
+  })
+  console.log(data);
+  //x.domain([0, d3.max(data, function(d) { return d.date; })]);
+  //y.domain([0, d3.max(data, function(d) { return d.close; })]);
+  svg.append("path")
+      .datum(data)
+      .attr("class", "line")
+      .attr("d", line);
+
+  
+  var svgbody = d3.select("body").transition();
+
+  svgbody.select(".line")   // change the line
+            .duration(750)
+            .attr("d", line);
+  svgbody.select(".x.axis") // change the x axis
+            .duration(750)
+            .call(xAxis);
+  svgbody.select(".y.axis") // change the y axis
+            .duration(750)
+            .call(yAxis);
+}
+
+var margin = {top: 50, right: 20, bottom: 50, left: 50},
+    width = 960 - margin.left - margin.right,
+    height = 500 - margin.top - margin.bottom;
+
+var x = d3.scale.linear()
+.domain([0, 700])
+    .range([0, width])
+
+var y = d3.scale.linear()
+.domain([0, 1000])
+    .range([height, 0]);
+
+var xAxis = d3.svg.axis()
+    .scale(x)
+    .orient("bottom");
+
+var yAxis = d3.svg.axis()
+    .scale(y)
+    .orient("left");
+
+var line = d3.svg.line()
+    .x(function(d) { return x(d.date); })
+    .y(function(d) { return y(d.close); });
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+  svg.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + height + ")")
+      .call(xAxis)
+      .append("text")
+      .attr("y", 40)
+      .text("Number of Nodes");
+
+  svg.append("g")
+      .attr("class", "y axis")
+      .call(yAxis)
+    .append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("y", 6)
+      .attr("dy", ".71em")
+      .style("text-anchor", "end")
+      .text("Time (ms)");
+
 
 </script>

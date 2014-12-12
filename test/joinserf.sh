@@ -7,8 +7,8 @@ fi
 
 num=$1
 joinaddr=$2
-gopath=/root/gopher
-interface=eth0
+gopath=/home/yifan/gopher
+interface=lo
 
 ipaddr=$(ifconfig $interface | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}')
 echo $ipaddr
@@ -24,5 +24,7 @@ do
     agentaddr=$ipaddr:$agentport
     restaddr=$ipaddr:$restport
 
-    $gopath/src/github.com/hashicorp/serf/bin/serf join -rpc-addr=$restaddr $joinaddr
+    #echo $i
+    curl -XPOST http://$restaddr/api/join -d peer=localhost:8000
+    #$gopath/src/github.com/hashicorp/serf/bin/serf join -rpc-addr=$restaddr $joinaddr
 done
