@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"reflect"
@@ -101,22 +102,23 @@ func (pc *ProtobufCodec) WriteMsg(msg proto.Message, w io.Writer) error {
 }
 
 // ReadMsg reads bytes from an io.Reader and decode it to a message.
-func (pc *ProtobufCodec) ReadMsg(r io.Reader) (proto.Message, error) {
+func (pc *ProtobufCodec) ReadMsg(r io.Reader) (msg proto.Message, err error) {
 	var length int32
 
 	defer func() {
-		if err := recover(); err != nil {
-			log.Errorf("Recovery from panic: %v", err)
+		if fatal := recover(); fatal != nil {
+			err = fmt.Errorf("Recovery from panic: %v", fatal)
+			log.Errorf(err.Error())
 		}
 	}()
 
 	// Read the length.
-	if err := binary.Read(r, binary.LittleEndian, &length); err != nil {
+	if err = binary.Read(r, binary.LittleEndian, &length); err != nil {
 		return nil, err
 	}
 	b := make([]byte, length)
 	// Read the type and bytes.
-	if _, err := io.ReadFull(r, b); err != nil {
+	if _, err = io.ReadFull(r, b); err != nil {
 		return nil, err
 	}
 	// Get the index.
@@ -126,7 +128,7 @@ func (pc *ProtobufCodec) ReadMsg(r io.Reader) (proto.Message, error) {
 	if !existed {
 		return nil, ErrMessageNotRegistered
 	}
-	msg := reflect.New(mtype.Elem()).Interface().(proto.Message)
+	msg = reflect.New(mtype.Elem()).Interface().(proto.Message)
 	if err := proto.Unmarshal(b[1:], msg); err != nil {
 		return nil, err
 	}

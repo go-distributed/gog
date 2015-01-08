@@ -72,7 +72,7 @@ func (rh *RESTServer) RegisterAPI(mux *http.ServeMux) {
 	return
 }
 
-// List lists the views
+// List lists the views.
 func (rh *RESTServer) List(w http.ResponseWriter, r *http.Request) {
 	b, err := rh.ag.List()
 	if err != nil {
